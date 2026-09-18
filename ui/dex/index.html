@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Galleon Wallet — Igra Sentinel</title>
+  <style>
+    :root { --bg:#070b12; --card:#101824; --border:#243044; --text:#eef4fc; --muted:#8fa3be; --accent:#6ee7b7; --bad:#f87171; --font:system-ui,sans-serif; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; }
+    header { padding:1.25rem 1.5rem; border-bottom:1px solid var(--border); }
+    h1 { margin:0 0 .3rem; font-size:1.2rem; }
+    .sub { color:var(--muted); font-size:.85rem; max-width:640px; }
+    main { max-width:480px; margin:1.5rem auto; padding:0 1rem 2rem; display:grid; gap:1rem; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.15rem; }
+    label { display:block; font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:.35rem; }
+    button { width:100%; padding:.7rem; border:none; border-radius:8px; background:var(--accent); color:#052e16; font-weight:600; cursor:pointer; margin-top:.4rem; }
+    button.secondary { background:transparent; border:1px solid var(--border); color:var(--text); }
+    .pill { display:inline-block; font-size:.7rem; padding:.2rem .5rem; border-radius:999px; background:#1a2838; color:var(--muted); }
+    .pill.live { background:#064e3b; color:var(--accent); }
+    .addr { font-family:ui-monospace,monospace; font-size:.75rem; color:var(--muted); word-break:break-all; margin:.5rem 0; }
+    pre { background:#0a1018; border:1px solid var(--border); border-radius:8px; padding:.65rem; font-size:.72rem; overflow:auto; max-height:200px; color:var(--muted); }
+    #err { color:var(--bad); font-size:.85rem; margin-top:.5rem; }
+    .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:100; align-items:center; justify-content:center; padding:1rem; }
+    .modal-backdrop.open { display:flex; }
+    .modal { background:var(--card); border:1px solid var(--border); border-radius:14px; width:100%; max-width:380px; padding:1.15rem; }
+    .wallet-list { display:grid; gap:.45rem; }
+    .wallet-opt { display:flex; align-items:center; gap:.65rem; width:100%; padding:.6rem; border-radius:10px; border:1px solid var(--border); background:#0a1018; color:var(--text); cursor:pointer; text-align:left; }
+    .wallet-opt:hover { border-color:var(--accent); }
+    .links a { color:var(--accent); text-decoration:none; font-size:.85rem; margin-right:.75rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Galleon wallet connect</h1>
+    <p class="sub">EIP-6963 + WalletConnect on chain 38836. Swap execution is in kaspa-frontier-engine — this UI only connects and probes sentinel status.</p>
+  </header>
+  <main>
+    <div class="card">
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:.75rem">
+        <button id="connectBtn" type="button" style="width:auto;margin:0">Connect wallet</button>
+        <span id="walletStatus" class="pill">disconnected</span>
+      </div>
+      <div id="walletAddr" class="addr"></div>
+      <div id="balLine" class="sub" style="font-size:.8rem"></div>
+      <div id="err"></div>
+    </div>
+    <div class="card">
+      <label>Sentinel gate (pre-tx)</label>
+      <button id="gateBtn" type="button" class="secondary">Check /v1/sentinel/status</button>
+      <pre id="gateOut">—</pre>
+    </div>
+    <div class="card links">
+      <a href="/ui">← Dashboard</a>
+      <a href="https://github.com/explife365/kaspa-frontier-engine/tree/main/projects/kaspa-dex-terminal" target="_blank" rel="noopener">Full DEX terminal</a>
+      <a href="/v1/dex/wallet/connect-config" target="_blank">Connect config</a>
+    </div>
+  </main>
+
+  <div id="walletModal" class="modal-backdrop">
+    <div class="modal">
+      <h2 style="margin:0 0 .5rem;font-size:1rem">Connect wallet</h2>
+      <div id="walletList" class="wallet-list"></div>
+      <button type="button" class="secondary" id="walletModalClose" style="margin-top:.75rem">Cancel</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { DexWallet } from "/ui/dex/wallet.js";
+
+    const API = window.location.origin;
+    const dexWallet = new DexWallet(API);
+    const errEl = document.getElementById("err");
+    const connectBtn = document.getElementById("connectBtn");
+    const walletStatus = document.getElementById("walletStatus");
+    const walletAddr = document.getElementById("walletAddr");
+    const balLine = document.getElementById("balLine");
+    const walletModal = document.getElementById("walletModal");
+    const walletList = document.getElementById("walletList");
+    const gateOut = document.getElementById("gateOut");
+
+    function setErr(msg) { errEl.textContent = msg || ""; }
+
+    function setConnected(on) {
+      connectBtn.textContent = on ? "Disconnect" : "Connect wallet";
+      walletStatus.textContent = on ? "connected" : "disconnected";
+      walletStatus.className = on ? "pill live" : "pill";
+      walletAddr.textContent = on ? dexWallet.trader : "";
+      balLine.textContent = "";
+    }
+
+    async function refreshBal() {
+      if (!dexWallet.trader) return;
+      try {
+        const wei = await dexWallet.getBalance();
+        const ikas = Number(wei) / 1e18;
+        balLine.textContent = `iKAS balance: ${ikas.toFixed(4)}`;
+      } catch (e) {
+        balLine.textContent = "Balance: " + e.message;
+      }
+    }
+
+    async function openModal() {
+      setErr("");
+      await dexWallet.loadConfig();
+      await dexWallet.discoverInjected();
+      const connectors = dexWallet.listConnectors();
+      walletList.innerHTML = "";
+      if (!connectors.length) {
+        walletList.innerHTML = "<p class='sub'>No wallets found. Install MetaMask or set WALLETCONNECT_PROJECT_ID.</p>";
+      } else {
+        for (const c of connectors) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "wallet-opt";
+          btn.innerHTML = `<strong>${c.name}</strong>`;
+          btn.onclick = async () => {
+            walletModal.classList.remove("open");
+            try {
+              await dexWallet.connect(c);
+              setConnected(true);
+              await refreshBal();
+            } catch (e) {
+              setErr(e.message);
+            }
+          };
+          walletList.appendChild(btn);
+        }
+      }
+      walletModal.classList.add("open");
+    }
+
+    connectBtn.onclick = async () => {
+      if (dexWallet.trader) {
+        await dexWallet.disconnect();
+        setConnected(false);
+        return;
+      }
+      await openModal();
+    };
+
+    document.getElementById("walletModalClose").onclick = () => walletModal.classList.remove("open");
+
+    document.getElementById("gateBtn").onclick = async () => {
+      const r = await fetch(`${API}/v1/sentinel/status`);
+      gateOut.textContent = JSON.stringify(await r.json(), null, 2);
+    };
+  </script>
+</body>
+</html>

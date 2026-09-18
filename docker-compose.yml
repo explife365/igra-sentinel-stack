@@ -1,0 +1,11 @@
+services:
+  sentinel:
+    build: .
+    ports:
+      - "8790:8790"
+    environment:
+      SENTINEL_API_HOST: 0.0.0.0
+      SENTINEL_API_PORT: 8790
+      GALLEON_RPC: https://galleon-testnet.igralabs.com:8545
+      IGRA_MAINNET_RPC: https://rpc.igralabs.com:8545
+    restart: unless-stopped

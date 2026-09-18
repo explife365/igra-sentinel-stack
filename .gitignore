@@ -1,0 +1,13 @@
+*.egg-info/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.env
+kaspa.env
+.local/
+*.log
+.DS_Store
+.idea/
+.vscode/

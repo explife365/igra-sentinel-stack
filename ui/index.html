@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Igra Sentinel Stack</title>
+  <style>
+    :root {
+      --bg: #070b12;
+      --card: #101824;
+      --border: #243044;
+      --text: #eef4fc;
+      --muted: #8fa3be;
+      --accent: #6ee7b7;
+      --warn: #fbbf24;
+      --bad: #f87171;
+      --igra: #a78bfa;
+      --font: "Segoe UI", system-ui, sans-serif;
+      --mono: ui-monospace, "Cascadia Code", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: radial-gradient(ellipse 120% 80% at 50% -20%, #1a1040 0%, var(--bg) 55%);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    header {
+      padding: 2rem clamp(1rem, 4vw, 3rem) 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h1 { margin: 0 0 .4rem; font-size: clamp(1.4rem, 3vw, 1.85rem); font-weight: 700; }
+    .tagline { color: var(--muted); max-width: 52rem; font-size: .95rem; }
+    .badges { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+    .badge {
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      padding: .25rem .55rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .badge.warn { border-color: #854d0e; color: var(--warn); }
+    .badge.live { border-color: #065f46; color: var(--accent); }
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.5rem clamp(1rem, 4vw, 3rem) 3rem;
+      display: grid;
+      gap: 1.25rem;
+    }
+    .grid { display: grid; gap: 1.25rem; }
+    @media (min-width: 800px) {
+      .grid.two { grid-template-columns: 1fr 1fr; }
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem 1.35rem;
+    }
+    .card h2 {
+      margin: 0 0 .75rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--igra);
+    }
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: .45rem 0;
+      border-bottom: 1px solid #1a2433;
+      font-size: .88rem;
+    }
+    .metric:last-child { border-bottom: none; }
+    .metric span:first-child { color: var(--muted); }
+    .metric .ok { color: var(--accent); }
+    .metric .bad { color: var(--bad); }
+    .metric .warn { color: var(--warn); }
+    pre {
+      background: #0a1018;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .85rem;
+      font-family: var(--mono);
+      font-size: .72rem;
+      overflow: auto;
+      max-height: 320px;
+      color: var(--muted);
+      margin: 0;
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }
+    a.btn, button.btn {
+      display: inline-block;
+      padding: .55rem 1rem;
+      border-radius: 8px;
+      font-size: .85rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    a.primary, button.primary { background: var(--accent); color: #052e16; }
+    a.secondary, button.secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    ul.compact { margin: 0; padding-left: 1.1rem; font-size: .85rem; color: var(--muted); }
+    ul.compact li { margin: .35rem 0; }
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--muted);
+      font-size: .8rem;
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    #loading { color: var(--muted); font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Igra Sentinel Stack</h1>
+    <p class="tagline">
+      Chain safety gates and dual-network probes for Igra EVM — Galleon testnet rehearsal (38836)
+      plus read-only Igra mainnet health (38833). Not consensus, not on-chain ZK, not an Igra partnership.
+    </p>
+    <div class="badges">
+      <span class="badge warn">not mainnet production</span>
+      <span class="badge warn">not partnership</span>
+      <span class="badge warn">not consensus</span>
+      <span class="badge" id="apiBadge">API …</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="grid two">
+      <div class="card">
+        <h2>Network probes</h2>
+        <div id="networkMetrics"><p id="loading">Loading status…</p></div>
+        <div class="actions">
+          <button class="btn secondary" type="button" id="refreshBtn">Refresh</button>
+          <a class="btn secondary" href="/v1/sentinel/status" target="_blank">Raw JSON</a>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Capabilities</h2>
+        <ul class="compact" id="capList"></ul>
+        <div class="actions">
+          <a class="btn primary" href="/ui/dex">Wallet connect (Galleon)</a>
+          <a class="btn secondary" href="/v1/igra/ecosystem" target="_blank">Ecosystem catalog</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Blockers</h2>
+      <ul class="compact" id="blockerList"><li>—</li></ul>
+    </div>
+
+    <div class="card">
+      <h2>Live status</h2>
+      <pre id="statusJson">…</pre>
+    </div>
+  </main>
+
+  <footer>
+    Full DEX router and swap execution live in
+    <a href="https://github.com/explife365/kaspa-frontier-engine" target="_blank" rel="noopener">kaspa-frontier-engine</a>.
+  </footer>
+
+  <script>
+    const API = window.location.origin;
+
+    function cls(ok, warn) {
+      if (ok === true) return "ok";
+      if (ok === false) return "bad";
+      return warn ? "warn" : "";
+    }
+
+    function renderNetwork(name, net) {
+      const p = net.probe || {};
+      const rows = [
+        ["Chain ID", net.chain_id, p.chain_id_matches ? "ok" : "bad"],
+        ["Reachable", p.reachable ? "yes" : "no", cls(p.reachable)],
+        ["Latest block", p.latest_block ?? "—", ""],
+        ["RPC writable", p.rpc_writable === false ? "read-only" : (p.rpc_writable ? "yes" : "—"), cls(p.rpc_writable, p.rpc_writable === false)],
+      ];
+      let html = `<h3 style="margin:.5rem 0;font-size:.85rem;color:var(--muted)">${name}</h3>`;
+      for (const [label, val, c] of rows) {
+        html += `<div class="metric"><span>${label}</span><span class="${c}">${val}</span></div>`;
+      }
+      return html;
+    }
+
+    async function loadStatus() {
+      const badge = document.getElementById("apiBadge");
+      const pre = document.getElementById("statusJson");
+      const cap = document.getElementById("capList");
+      const blockers = document.getElementById("blockerList");
+      const nets = document.getElementById("networkMetrics");
+      try {
+        const r = await fetch(`${API}/v1/sentinel/status`);
+        const body = await r.json();
+        pre.textContent = JSON.stringify(body, null, 2);
+        badge.textContent = body.ok ? "API live" : "API degraded";
+        badge.className = "badge " + (body.ok ? "live" : "warn");
+
+        cap.innerHTML = (body.implemented || [])
+          .map((c) => `<li><strong>${c.id}</strong> — ${c.endpoint || c.cli || c.ui || ""}</li>`)
+          .join("");
+
+        const bl = body.blockers || [];
+        blockers.innerHTML = bl.length
+          ? bl.map((b) => `<li class="bad">${b}</li>`).join("")
+          : "<li class='ok'>None — rehearsal path clear</li>";
+
+        const n = body.networks || {};
+        nets.innerHTML =
+          renderNetwork("Galleon testnet", n.galleon_testnet || {}) +
+          renderNetwork("Igra mainnet (read)", n.igra_mainnet || {});
+      } catch (e) {
+        badge.textContent = "API offline";
+        badge.className = "badge warn";
+        pre.textContent = String(e);
+        nets.innerHTML = "<p class='bad'>Could not reach /v1/sentinel/status</p>";
+      }
+    }
+
+    document.getElementById("refreshBtn").addEventListener("click", loadStatus);
+    loadStatus();
+  </script>
+</body>
+</html>
