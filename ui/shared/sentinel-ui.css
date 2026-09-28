@@ -1,0 +1,65 @@
+:root {
+  --bg-texture: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 75%);
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --focus-ring: 0 0 0 2px rgba(158, 192, 220, 0.4);
+  --card-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+body {
+  font-family: var(--font-sans) !important;
+  background-image: var(--bg-texture);
+  background-attachment: fixed;
+}
+
+pre, code, .addr, .mono {
+  font-family: var(--font-mono) !important;
+}
+
+/* Hero strip on headers */
+header {
+  position: relative;
+}
+header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--link, var(--accent, #9ec0dc)), var(--ok, var(--accent, #8fbfa8)));
+}
+
+/* Improved nav pills and buttons */
+nav a, .wallet-bar button, button {
+  transition: all 0.2s ease;
+}
+nav a:hover, button:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px);
+}
+
+/* Card depth via border+subtle inset highlight (no heavy box-shadow) */
+.card, section, .modal {
+  box-shadow: var(--card-inset), 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover, section:hover {
+  box-shadow: var(--card-inset), 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Focus-visible rings */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Smooth transitions */
+input, select {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Keep fail-closed disclaimers visible */
+.role, footer, .chip, .sub {
+  font-weight: 500;
+}
