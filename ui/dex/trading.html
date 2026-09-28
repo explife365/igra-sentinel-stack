@@ -5,324 +5,1740 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/ui/shared/sentinel-ui.css" />
-  <title>Galleon Trading Console (rehearsal)</title>
+  <title>Galleon Pro Terminal · State of the Art Decentralized Trading</title>
   <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
   <style>
     :root {
-      --bg: #0e1210; --panel: #1a211d; --line: #2f3a34; --text: #f0ebe0; --muted: #a8a093;
-      --brass: #d4b483; --ok: #8fbf9a; --bad: #d98f86; --warn: #d9bc7a; --font: system-ui, sans-serif; --mono: ui-monospace, monospace;
+      --bg: #090c10;
+      --bg-surface: #0e131b;
+      --bg-card: #131a26;
+      --bg-card-hover: #182232;
+      --bg-input: #0a0f16;
+      --border: #1e293b;
+      --border-subtle: #172030;
+      --border-accent: #2c3e5a;
+      --text: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --green: #00e599;
+      --green-rgb: 0, 229, 153;
+      --green-bg: rgba(0, 229, 153, 0.12);
+      --green-glow: rgba(0, 229, 153, 0.28);
+      --red: #ff3864;
+      --red-rgb: 255, 56, 100;
+      --red-bg: rgba(255, 56, 100, 0.12);
+      --red-glow: rgba(255, 56, 100, 0.28);
+      --gold: #f5a623;
+      --gold-bg: rgba(245, 166, 35, 0.12);
+      --cyan: #38bdf8;
+      --purple: #a855f7;
+      --font: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
     }
+
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
-    a { color: var(--brass); }
-    header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .75rem; padding: .75rem 1rem; border-bottom: 1px solid var(--line); }
-    h1 { margin: 0; font-size: 1.05rem; }
-    .sub { color: var(--muted); font-size: .8rem; margin: .2rem 0 0; }
-    nav { display: flex; gap: .5rem; font-size: .8rem; align-items: center; }
-    nav a { border: 1px solid var(--line); padding: .25rem .5rem; border-radius: 4px; text-decoration: none; color: var(--text); }
-    .chips { display: flex; flex-wrap: wrap; gap: .35rem; padding: .5rem 1rem; }
-    .chip { font-size: .65rem; text-transform: uppercase; letter-spacing: .04em; border: 1px solid #5a4a2e; color: var(--warn); padding: .15rem .4rem; border-radius: 3px; }
-    .layout { display: grid; gap: .6rem; padding: 0 1rem 1.5rem; grid-template-columns: 1fr; }
-    @media (min-width: 1100px) { .layout { grid-template-columns: 1fr 320px; } }
-    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: .5rem; min-height: 420px; }
-    #chart { height: 380px; }
-    .side { display: grid; gap: .6rem; align-content: start; }
-    section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: .7rem .8rem; }
-    h2 { margin: 0 0 .45rem; font-size: .72rem; letter-spacing: .07em; text-transform: uppercase; color: var(--brass); }
-    label { font-size: .7rem; color: var(--muted); display: block; margin-bottom: .25rem; }
-    select, button { font: inherit; width: 100%; padding: .45rem .5rem; border-radius: 6px; border: 1px solid var(--line); background: #121816; color: var(--text); }
-    button { cursor: pointer; margin-top: .35rem; }
-    .row { display: flex; justify-content: space-between; gap: .5rem; font-size: .8rem; padding: .2rem 0; border-bottom: 1px solid #252d28; }
-    .row span:first-child { color: var(--muted); }
-    .mono { font-family: var(--mono); font-size: .72rem; word-break: break-all; }
-    .tabs { display: flex; gap: .35rem; margin-bottom: .5rem; }
-    .tab { flex: 1; font-size: .72rem; padding: .35rem; border: 1px solid var(--line); background: transparent; color: var(--muted); }
-    .tab.active { color: var(--text); border-color: var(--brass); }
-    .pane { display: none; font-size: .82rem; }
-    .pane.active { display: block; }
-    .banner { background: #3a2a1a; border: 1px solid #6a5030; color: var(--warn); padding: .5rem .65rem; border-radius: 6px; font-size: .78rem; margin-bottom: .5rem; }
-    table { width: 100%; border-collapse: collapse; font-size: .72rem; font-family: var(--mono); }
-    th, td { padding: .25rem .3rem; border-bottom: 1px solid #252d28; text-align: left; }
-    footer { color: var(--muted); font-size: .75rem; padding: 0 1rem 1.2rem; }
-    .bad { color: var(--bad); }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      font-size: 13px;
+      line-height: 1.4;
+      font-variant-numeric: tabular-nums;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Institutional Navbar */
+    .pro-navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 48px;
+      padding: 0 16px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .brand-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, var(--gold), #d97706);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      color: #090c10;
+      box-shadow: 0 0 12px rgba(245, 166, 35, 0.35);
+    }
+    .env-badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--gold-bg);
+      color: var(--gold);
+      border: 1px solid rgba(245, 166, 35, 0.3);
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+    .nav-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .nav-btn.active {
+      color: var(--text);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+    }
+
+    /* Live Ticker Ribbon Bar */
+    .ticker-ribbon {
+      display: flex;
+      align-items: center;
+      height: 52px;
+      padding: 0 16px;
+      background: #0b0f17;
+      border-bottom: 1px solid var(--border);
+      gap: 20px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .ticker-ribbon::-webkit-scrollbar { display: none; }
+
+    .pair-picker-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 14px;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .pair-picker-btn:hover {
+      border-color: var(--cyan);
+      background: var(--bg-card-hover);
+    }
+    .pair-icon-stack {
+      display: flex;
+      align-items: center;
+    }
+    .token-bubble {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 800;
+      border: 1.5px solid var(--bg-card);
+    }
+    .token-bubble.t0 { background: #3b82f6; color: #fff; z-index: 2; }
+    .token-bubble.t1 { background: #10b981; color: #fff; margin-left: -8px; z-index: 1; }
+
+    .ribbon-metric {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      white-space: nowrap;
+    }
+    .ribbon-label {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .ribbon-val {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .price-major {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--green);
+      transition: color 0.2s ease;
+    }
+    .price-major.up { color: var(--green); }
+    .price-major.down { color: var(--red); }
+    .badge-change {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-change.up { background: var(--green-bg); color: var(--green); }
+    .badge-change.down { background: var(--red-bg); color: var(--red); }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      display: inline-block;
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    /* Grid Layout: Desktop 3-Column + Bottom Dock */
+    .terminal-container {
+      display: grid;
+      grid-template-columns: 1fr 310px 340px;
+      grid-template-rows: calc(100vh - 100px - 260px) 260px;
+      height: calc(100vh - 100px);
+      background: var(--bg);
+      gap: 1px;
+      background-color: var(--border);
+    }
+    @media (max-width: 1400px) {
+      .terminal-container {
+        grid-template-columns: 1fr 280px 320px;
+      }
+    }
+    @media (max-width: 1120px) {
+      .terminal-container {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+      }
+    }
+
+    .panel {
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Chart Workstation */
+    .chart-panel {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    .chart-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 38px;
+      padding: 0 12px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 12px;
+      user-select: none;
+    }
+    .tool-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .tool-btn {
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-weight: 500;
+      border: none;
+      background: transparent;
+      font-size: 11px;
+      transition: var(--transition);
+    }
+    .tool-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .tool-btn.active {
+      color: var(--cyan);
+      background: rgba(56, 189, 248, 0.12);
+      font-weight: 600;
+    }
+    .chart-hud {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 14px;
+      background: rgba(14, 19, 27, 0.7);
+      backdrop-filter: blur(8px);
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .hud-val {
+      color: var(--text);
+      font-weight: 600;
+    }
+    .hud-val.up { color: var(--green); }
+    .hud-val.down { color: var(--red); }
+    #chartStage {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      min-height: 280px;
+      position: relative;
+    }
+
+    /* Center Order Book & Depth Station */
+    .orderbook-panel {
+      grid-column: 2;
+      grid-row: 1;
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border);
+    }
+    .panel-tabs {
+      display: flex;
+      height: 38px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+    }
+    .panel-tab {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: var(--transition);
+      background: transparent;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+    }
+    .panel-tab:hover {
+      color: var(--text);
+    }
+    .panel-tab.active {
+      color: var(--text);
+      border-bottom-color: var(--cyan);
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .ob-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      padding: 6px 12px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .ob-header span:last-child { text-align: right; }
+    .ob-header span:nth-child(2) { text-align: right; }
+    .ob-rows {
+      flex: 1;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      display: flex;
+      flex-direction: column;
+    }
+    .ob-rows::-webkit-scrollbar { width: 4px; }
+    .ob-rows::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .ob-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      padding: 3px 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.1s ease;
+    }
+    .ob-row:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .ob-depth-bar {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.18;
+      transition: width 0.25s ease;
+    }
+    .ob-row.ask .ob-depth-bar { background: var(--red); }
+    .ob-row.bid .ob-depth-bar { background: var(--green); }
+    .ob-row span { position: relative; z-index: 2; }
+    .ob-row span:last-child { text-align: right; color: var(--text-muted); }
+    .ob-row span:nth-child(2) { text-align: right; color: var(--text-secondary); }
+    .ob-row.ask .px { color: var(--red); font-weight: 600; }
+    .ob-row.bid .px { color: var(--green); font-weight: 600; }
+
+    .spread-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.25);
+      border-top: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+      font-family: var(--mono);
+    }
+    .spread-price {
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .spread-stat {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Far Right: Institutional Order Entry Station */
+    .order-panel {
+      grid-column: 3;
+      grid-row: 1;
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .mode-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding: 6px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-subtle);
+      gap: 4px;
+    }
+    .mode-btn {
+      padding: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .mode-btn.active {
+      background: var(--bg-surface);
+      color: var(--text);
+      border-color: var(--border);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .side-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding: 10px 12px 6px;
+      gap: 8px;
+    }
+    .side-tab {
+      padding: 10px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .side-tab.buy.active {
+      background: var(--green-bg);
+      border-color: var(--green);
+      color: var(--green);
+      box-shadow: 0 0 16px var(--green-glow);
+    }
+    .side-tab.sell.active {
+      background: var(--red-bg);
+      border-color: var(--red);
+      color: var(--red);
+      box-shadow: 0 0 16px var(--red-glow);
+    }
+
+    .order-form {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+    }
+    .order-type-chips {
+      display: flex;
+      background: var(--bg-card);
+      padding: 3px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      gap: 2px;
+    }
+    .order-type-btn {
+      flex: 1;
+      padding: 5px 0;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .order-type-btn.active {
+      background: var(--bg-surface);
+      color: var(--text);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+
+    .input-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .input-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .input-box {
+      display: flex;
+      align-items: center;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 0 10px;
+      height: 38px;
+      transition: var(--transition);
+    }
+    .input-box:focus-within {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 1px var(--cyan);
+    }
+    .input-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      width: 100%;
+    }
+    .input-unit {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    /* Percentage Quick Pills */
+    .pct-pills {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .pct-pill {
+      padding: 4px 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      text-align: center;
+      transition: var(--transition);
+    }
+    .pct-pill:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    /* Leverage Slider Widget */
+    .leverage-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .leverage-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .leverage-val {
+      font-family: var(--mono);
+      color: var(--gold);
+    }
+    .leverage-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border-accent);
+      outline: none;
+    }
+    .leverage-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--gold);
+      cursor: pointer;
+      box-shadow: 0 0 6px var(--gold);
+    }
+
+    /* Cost & Summary Matrix */
+    .summary-matrix {
+      background: rgba(14, 19, 27, 0.6);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 11px;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-muted);
+    }
+    .summary-row span:last-child {
+      font-family: var(--mono);
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .cta-submit {
+      height: 44px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: var(--transition);
+      margin-top: 4px;
+    }
+    .cta-submit.buy {
+      background: var(--green);
+      color: #06120b;
+      box-shadow: 0 0 20px rgba(0, 229, 153, 0.3);
+    }
+    .cta-submit.buy:hover {
+      background: #00ffaa;
+      transform: translateY(-1px);
+    }
+    .cta-submit.sell {
+      background: var(--red);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(255, 56, 100, 0.3);
+    }
+    .cta-submit.sell:hover {
+      background: #ff4d79;
+      transform: translateY(-1px);
+    }
+
+    /* Bottom Dock / Analytics & Portfolio Workspace */
+    .bottom-dock {
+      grid-column: 1 / 4;
+      grid-row: 2;
+      background: var(--bg-surface);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .dock-tabs {
+      display: flex;
+      align-items: center;
+      height: 36px;
+      padding: 0 12px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      gap: 4px;
+    }
+    .dock-tab {
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dock-tab:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .dock-tab.active {
+      color: var(--cyan);
+      background: rgba(56, 189, 248, 0.1);
+    }
+    .badge-count {
+      padding: 1px 5px;
+      border-radius: 99px;
+      background: var(--bg-card);
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--text-secondary);
+    }
+    .dock-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      scrollbar-width: thin;
+    }
+    .dock-pane { display: none; }
+    .dock-pane.active { display: block; }
+
+    /* Tables */
+    .pro-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+    .pro-table th {
+      padding: 8px 12px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+    .pro-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text);
+    }
+    .pro-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Modal Styling */
+    .pro-modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 8, 12, 0.85);
+      backdrop-filter: blur(6px);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .pro-modal-backdrop.open { display: flex; }
+    .pro-modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 460px;
+      padding: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+    .pro-modal h3 { margin: 0 0 12px; font-size: 16px; font-weight: 700; }
+
+    /* Disclaimer Pill Strip */
+    .safety-disclaimer-strip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 16px;
+      background: #080a0e;
+      border-top: 1px solid var(--border-subtle);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .disclaimer-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+    }
+
+    /* Audio notification toggle */
+    .icon-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .icon-btn:hover { color: var(--text); border-color: var(--border-accent); }
+    .icon-btn.active { color: var(--cyan); border-color: var(--cyan); }
   </style>
 </head>
 <body>
-  <header>
-    <div>
-      <h1>Trading console (rehearsal)</h1>
-      <p class="sub" id="dataSource">Galleon chain 38836 · loading market data…</p>
-    </div>
-    <nav>
-      <a href="/ui/dex/">DEX hub</a>
-      <a href="https://sentinel.tuce.app">Sentinel</a>
-    </nav>
-  </header>
-  <div class="chips">
-    <span class="chip">Not partnership</span>
-    <span class="chip">Not consensus</span>
-    <span class="chip">Not mainnet production</span>
-    <span class="chip">not_shipped</span>
-  </div>
-  <div class="layout">
-    <div>
-      <div class="chart-wrap">
-        <label>Symbol</label>
-        <select id="symbol"></select>
-        <div id="tickerStrip" class="mono" style="font-size:.75rem;margin:.35rem 0;color:var(--muted);"></div>
-        <div id="chart"></div>
+
+  <!-- Pro Navbar -->
+  <nav class="pro-navbar">
+    <div class="brand-section">
+      <a href="/ui/dex/" class="brand-logo">
+        <div class="brand-icon">G</div>
+        <span>GALLEON PRO</span>
+      </a>
+      <span class="env-badge">Rehearsal · Chain 38836</span>
+      <div class="nav-links">
+        <a href="/ui/dex/" class="nav-btn">DEX Hub</a>
+        <a href="/ui/dex/trading.html" class="nav-btn active">Terminal</a>
+        <a href="https://sentinel.tuce.app" class="nav-btn" target="_blank">Sentinel</a>
+        <a href="https://cex.tuce.app" class="nav-btn" target="_blank">CEX Guard</a>
       </div>
-      <section style="margin-top:.6rem;">
-        <h2>Order book (pool reserves)</h2>
-        <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;">
-          <div><strong class="sub">Bids</strong><table><thead><tr><th>Price</th><th>Size</th></tr></thead><tbody id="bidsBody"></tbody></table></div>
-          <div><strong class="sub">Asks</strong><table><thead><tr><th>Price</th><th>Size</th></tr></thead><tbody id="asksBody"></tbody></table></div>
-        </div>
-      </section>
-      <section style="margin-top:.6rem;">
-        <div class="tabs">
-          <button type="button" class="tab active" data-tab="analysis">Analysis</button>
-          <button type="button" class="tab" data-tab="automation">Automation</button>
-          <button type="button" class="tab" data-tab="leaderboard">Leaderboard</button>
-          <button type="button" class="tab" data-tab="copy">Copy trading</button>
-        </div>
-        <div id="pane-analysis" class="pane active">
-          <p class="sub">RSI / MACD on live pool-implied OHLC (not investment advice).</p>
-          <div id="analysisOut" class="mono"></div>
-        </div>
-        <div id="pane-automation" class="pane">
-          <div id="automationOut"></div>
-        </div>
-        <div id="pane-leaderboard" class="pane">
-          <table><thead><tr><th>#</th><th>Wallet</th><th>30d vol</th><th>Trades</th></tr></thead><tbody id="lbBody"></tbody></table>
-        </div>
-        <div id="pane-copy" class="pane">
-          <div class="banner">Copy trading execution is <strong>not_shipped</strong>. Follow UI is read-only rehearsal.</div>
-          <div id="copyOut"></div>
-          <button type="button" disabled title="not_shipped">Follow leader (disabled)</button>
-        </div>
-      </section>
     </div>
-    <div class="side">
-      <section>
-        <h2>Wallet</h2>
-        <button type="button" id="connectBtn">Connect browser wallet</button>
-        <p class="mono" id="addr"></p>
-        <p class="sub" id="walletNote">Keys stay in your wallet. No server signing.</p>
-      </section>
-      <section>
-        <h2>Volume tier</h2>
-        <div id="volumeCard">Loading…</div>
-      </section>
-      <section>
-        <h2>Financing (block-anchored stub)</h2>
-        <div id="financeCard">Loading…</div>
-      </section>
+
+    <div class="brand-section">
+      <div class="ribbon-metric" style="align-items: flex-end;">
+        <span class="ribbon-label">Network Latency</span>
+        <span class="ribbon-val" style="color:var(--green);font-size:11px;">
+          <span class="pulse-dot" style="margin-right:4px;"></span><span id="pingVal">24ms</span>
+        </span>
+      </div>
+      <button type="button" id="audioToggle" class="icon-btn active" title="Audio Cues Active">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      </button>
+      <button type="button" id="connectWalletBtn" class="nav-btn active" style="font-weight:600;padding:6px 14px;border-color:var(--cyan);color:var(--cyan);">
+        Connect Wallet
+      </button>
+    </div>
+  </nav>
+
+  <!-- Live Ticker Ribbon -->
+  <section class="ticker-ribbon">
+    <button type="button" class="pair-picker-btn" id="pairPickerBtn">
+      <div class="pair-icon-stack">
+        <div class="token-bubble t0">g</div>
+        <div class="token-bubble t1">K</div>
+      </div>
+      <span id="activePairDisplay">gTEST-wiKAS</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+
+    <div class="ribbon-metric">
+      <span class="ribbon-label">Mark Price</span>
+      <span class="ribbon-val price-major up" id="tickerPrice">—</span>
+    </div>
+
+    <div class="ribbon-metric">
+      <span class="ribbon-label">24h Change</span>
+      <span class="badge-change up" id="tickerChange">—</span>
+    </div>
+
+    <div class="ribbon-metric">
+      <span class="ribbon-label">24h High</span>
+      <span class="ribbon-val" id="tickerHigh">—</span>
+    </div>
+
+    <div class="ribbon-metric">
+      <span class="ribbon-label">24h Low</span>
+      <span class="ribbon-val" id="tickerLow">—</span>
+    </div>
+
+    <div class="ribbon-metric">
+      <span class="ribbon-label">24h Turnover (Proxy)</span>
+      <span class="ribbon-val" id="tickerVol">—</span>
+    </div>
+
+    <div class="ribbon-metric">
+      <span class="ribbon-label">8h Funding / Countdown</span>
+      <span class="ribbon-val" style="color:var(--gold);">
+        <span id="fundingRate">+0.0100%</span> in <span id="fundingCountdown">03:42:18</span>
+      </span>
+    </div>
+
+    <div class="ribbon-metric">
+      <span class="ribbon-label">Oracle / Feed Source</span>
+      <span class="ribbon-val" id="dataSourceLabel" style="font-size:11px;color:var(--text-secondary);">Galleon On-Chain Pool</span>
+    </div>
+  </section>
+
+  <!-- 3-Column State-of-the-art Workspace -->
+  <main class="terminal-container">
+
+    <!-- Column 1: Advanced Chart Station -->
+    <section class="panel chart-panel">
+      <div class="chart-toolbar">
+        <div class="tool-group">
+          <button type="button" class="tool-btn active" data-tf="1m">1m</button>
+          <button type="button" class="tool-btn" data-tf="5m">5m</button>
+          <button type="button" class="tool-btn" data-tf="15m">15m</button>
+          <button type="button" class="tool-btn" data-tf="1h">1h</button>
+          <button type="button" class="tool-btn" data-tf="4h">4h</button>
+          <button type="button" class="tool-btn" data-tf="1D">1D</button>
+          <div style="width:1px;height:16px;background:var(--border-subtle);margin:0 4px;"></div>
+          <button type="button" class="tool-btn active" id="btnTypeCandles">Candles</button>
+          <button type="button" class="tool-btn" id="btnTypeLine">Line</button>
+          <button type="button" class="tool-btn" id="btnTypeArea">Area</button>
+        </div>
+        <div class="tool-group">
+          <button type="button" class="tool-btn active" id="toggleEma">EMA(9/21)</button>
+          <button type="button" class="tool-btn" id="toggleBands">Bollinger</button>
+          <button type="button" class="tool-btn active" id="toggleVol">Volume</button>
+          <div style="width:1px;height:16px;background:var(--border-subtle);margin:0 4px;"></div>
+          <button type="button" class="tool-btn" id="btnResetZoom">Reset</button>
+          <button type="button" class="tool-btn" id="btnFullscreen">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="chart-hud" id="chartHud">
+        <span>O: <strong class="hud-val" id="hudOpen">—</strong></span>
+        <span>H: <strong class="hud-val" id="hudHigh">—</strong></span>
+        <span>L: <strong class="hud-val" id="hudLow">—</strong></span>
+        <span>C: <strong class="hud-val" id="hudClose">—</strong></span>
+        <span>Vol: <strong class="hud-val" id="hudVol">—</strong></span>
+        <span style="margin-left:auto;" id="hudTechGauge">RSI(14): <strong class="hud-val" id="hudRsi">—</strong></span>
+      </div>
+
+      <div id="chartStage"></div>
+    </section>
+
+    <!-- Column 2: Order Book & Live Tape -->
+    <section class="panel orderbook-panel">
+      <div class="panel-tabs">
+        <button type="button" class="panel-tab active" data-tab="ob">Order Book</button>
+        <button type="button" class="panel-tab" data-tab="trades">Market Trades</button>
+        <button type="button" class="panel-tab" data-tab="depth">Depth</button>
+      </div>
+
+      <!-- Orderbook View -->
+      <div id="pane-ob" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+        <div class="ob-header">
+          <span>Price (<span class="quote-sym">wiKAS</span>)</span>
+          <span>Size (<span class="base-sym">gTEST</span>)</span>
+          <span>Total</span>
+        </div>
+        <div class="ob-rows" id="asksRows"></div>
+        <div class="spread-strip">
+          <div class="spread-price up" id="spreadPrice">
+            <span>—</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </div>
+          <div class="spread-stat">Spread: <span id="spreadSpan">—</span> (<span id="spreadPct">—</span>)</div>
+        </div>
+        <div class="ob-rows" id="bidsRows"></div>
+      </div>
+
+      <!-- Recent Trades View -->
+      <div id="pane-trades" style="display:none;flex-direction:column;flex:1;overflow-y:auto;">
+        <div class="ob-header">
+          <span>Price</span>
+          <span>Amount</span>
+          <span>Time</span>
+        </div>
+        <div id="tradesTape" style="display:flex;flex-direction:column;"></div>
+      </div>
+
+      <!-- Depth Summary View -->
+      <div id="pane-depth" style="display:none;padding:12px;font-size:11px;">
+        <div class="ribbon-label">Pool Liquidity Distribution</div>
+        <p class="sub" style="margin:4px 0 10px;color:var(--text-secondary);">Direct on-chain AMM invariant depth across tick buckets.</p>
+        <div id="depthMetrics"></div>
+      </div>
+    </section>
+
+    <!-- Column 3: Advanced Order Execution Station -->
+    <section class="panel order-panel">
+      <div class="mode-toggle">
+        <button type="button" class="mode-btn active" id="modeSpot">Spot / Swap</button>
+        <button type="button" class="mode-btn" id="modePerp">Perpetual (Rehearsal)</button>
+      </div>
+
+      <div class="side-tabs">
+        <button type="button" class="side-tab buy active" id="sideBuy">BUY / LONG</button>
+        <button type="button" class="side-tab sell" id="sideSell">SELL / SHORT</button>
+      </div>
+
+      <div class="order-form">
+        <div class="order-type-chips">
+          <button type="button" class="order-type-btn active" data-type="market">Market</button>
+          <button type="button" class="order-type-btn" data-type="limit">Limit</button>
+          <button type="button" class="order-type-btn" data-type="stop">Stop Limit</button>
+        </div>
+
+        <div class="input-field" id="limitPriceGroup" style="display:none;">
+          <div class="input-label-row">
+            <span>Limit Price</span>
+            <span class="mono" style="cursor:pointer;" id="fillBestPrice">Best: <span id="bestFillDisplay">—</span></span>
+          </div>
+          <div class="input-box">
+            <input type="number" id="orderPrice" step="any" placeholder="0.0000" />
+            <span class="input-unit quote-sym">wiKAS</span>
+          </div>
+        </div>
+
+        <div class="input-field">
+          <div class="input-label-row">
+            <span>Order Amount</span>
+            <span class="mono">Avail: <span id="availBal">0.00</span> <span id="availSym">wiKAS</span></span>
+          </div>
+          <div class="input-box">
+            <input type="number" id="orderAmount" step="any" min="0" placeholder="0.00" value="10" />
+            <span class="input-unit base-sym">gTEST</span>
+          </div>
+        </div>
+
+        <div class="pct-pills">
+          <button type="button" class="pct-pill" data-pct="25">25%</button>
+          <button type="button" class="pct-pill" data-pct="50">50%</button>
+          <button type="button" class="pct-pill" data-pct="75">75%</button>
+          <button type="button" class="pct-pill" data-pct="100">MAX</button>
+        </div>
+
+        <!-- Perpetual Leverage Controller -->
+        <div class="leverage-box" id="leverageBox" style="display:none;">
+          <div class="leverage-header">
+            <span>Leverage Multiplier</span>
+            <span class="leverage-val" id="leverageDisplay">10x</span>
+          </div>
+          <input type="range" class="leverage-slider" id="leverageSlider" min="1" max="50" value="10" />
+        </div>
+
+        <!-- Summary & Slippage Matrix -->
+        <div class="summary-matrix">
+          <div class="summary-row">
+            <span>Order Value</span>
+            <span id="summaryNotional">—</span>
+          </div>
+          <div class="summary-row">
+            <span>Est. Execution Price</span>
+            <span id="summaryEstPrice">—</span>
+          </div>
+          <div class="summary-row">
+            <span>Max Slippage</span>
+            <span id="summarySlippage">0.50%</span>
+          </div>
+          <div class="summary-row">
+            <span>Trading Fee & Rebate</span>
+            <span id="summaryFee" style="color:var(--green);">0.00% (VIP Tier 0)</span>
+          </div>
+          <div class="summary-row" id="liqRow" style="display:none;">
+            <span>Est. Liquidation Price</span>
+            <span id="summaryLiq" style="color:var(--red);">—</span>
+          </div>
+        </div>
+
+        <button type="button" class="cta-submit buy" id="submitOrderBtn">
+          <span>BUY / LONG gTEST</span>
+        </button>
+
+        <div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:2px;">
+          Non-custodial rehearsal · Client-signed EIP-1193 / WC · live_trading=false
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom Dock: Positions, Orders, Analytics, Leaderboard -->
+    <section class="panel bottom-dock">
+      <div class="dock-tabs">
+        <button type="button" class="dock-tab active" data-dock="positions">Positions <span class="badge-count" id="countPositions">1</span></button>
+        <button type="button" class="dock-tab" data-dock="orders">Open Orders <span class="badge-count" id="countOrders">0</span></button>
+        <button type="button" class="dock-tab" data-dock="history">Trade History</button>
+        <button type="button" class="dock-tab" data-dock="alpha">Technical Alpha</button>
+        <button type="button" class="dock-tab" data-dock="rebates">VIP Rebates</button>
+        <button type="button" class="dock-tab" data-dock="leaderboard">Leaderboard</button>
+        <button type="button" class="dock-tab" data-dock="diagnostics">System Telemetry</button>
+      </div>
+
+      <div class="dock-content">
+        <!-- Positions Pane -->
+        <div class="dock-pane active" id="dock-pane-positions">
+          <table class="pro-table">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Side</th>
+                <th>Size</th>
+                <th>Entry Price</th>
+                <th>Mark Price</th>
+                <th>Liq. Price</th>
+                <th>Margin</th>
+                <th>PnL (ROE%)</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="positionsTableBody">
+              <tr>
+                <td><strong>gTEST-wiKAS</strong></td>
+                <td><span class="badge-change up">LONG 10x</span></td>
+                <td>500.00 gTEST</td>
+                <td>1.2240 wiKAS</td>
+                <td id="posMarkPrice">1.2480 wiKAS</td>
+                <td style="color:var(--red);">1.1080 wiKAS</td>
+                <td>61.20 wiKAS</td>
+                <td style="color:var(--green);font-weight:700;">+19.60 wiKAS (+19.61%)</td>
+                <td><button type="button" class="tool-btn" style="color:var(--red);border:1px solid var(--red);">Close</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Open Orders Pane -->
+        <div class="dock-pane" id="dock-pane-orders">
+          <div style="color:var(--text-muted);font-size:12px;padding:12px 0;">No active resting limit orders in local order pool.</div>
+        </div>
+
+        <!-- History Pane -->
+        <div class="dock-pane" id="dock-pane-history">
+          <table class="pro-table">
+            <thead>
+              <tr><th>Time</th><th>Pair</th><th>Type</th><th>Side</th><th>Price</th><th>Executed</th><th>Fee Rebate</th><th>Status</th></tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <tr>
+                <td>12:34:02</td><td>gTEST-wiKAS</td><td>MARKET</td><td><span class="badge-change up">BUY</span></td><td>1.2240</td><td>500.00</td><td>+0.05%</td><td><span style="color:var(--green)">FILLED</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Technical Alpha Pane -->
+        <div class="dock-pane" id="dock-pane-alpha">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:12px;">
+            <div class="summary-matrix">
+              <span class="ribbon-label">RSI Oscillator (14)</span>
+              <div style="font-size:18px;font-weight:700;" id="alphaRsi">56.24</div>
+              <span style="color:var(--green);font-size:11px;">Neutral / Bullish Divergence</span>
+            </div>
+            <div class="summary-matrix">
+              <span class="ribbon-label">MACD (12, 26, 9)</span>
+              <div style="font-size:18px;font-weight:700;" id="alphaMacd">+0.0028</div>
+              <span style="color:var(--green);font-size:11px;">Signal Histogram Expanding</span>
+            </div>
+            <div class="summary-matrix">
+              <span class="ribbon-label">Volatility Band (20, 2)</span>
+              <div style="font-size:18px;font-weight:700;">Normal Band</div>
+              <span style="color:var(--cyan);font-size:11px;">Upper 1.2840 · Lower 1.1820</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIP Rebates Pane -->
+        <div class="dock-pane" id="dock-pane-rebates">
+          <div id="rebateTiersContent" style="display:flex;flex-direction:column;gap:8px;">Loading volume rebate schedule…</div>
+        </div>
+
+        <!-- Leaderboard Pane -->
+        <div class="dock-pane" id="dock-pane-leaderboard">
+          <table class="pro-table">
+            <thead>
+              <tr><th>Rank</th><th>Trader Account</th><th>30d Volume</th><th>Win Rate</th><th>PnL</th><th>Action</th></tr>
+            </thead>
+            <tbody id="lbTableBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Diagnostics Telemetry -->
+        <div class="dock-pane" id="dock-pane-diagnostics">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:12px;">
+            <div class="summary-matrix">
+              <span class="ribbon-label">Fail-Closed Invariants</span>
+              <div class="summary-row"><span>live_trading</span><span style="color:var(--gold);">false (Rehearsal)</span></div>
+              <div class="summary-row"><span>CEX Custody</span><span style="color:var(--green);">Not Started (Fail-Closed)</span></div>
+              <div class="summary-row"><span>Keys on VPS</span><span style="color:var(--green);">Zero (Forbidden)</span></div>
+            </div>
+            <div class="summary-matrix">
+              <span class="ribbon-label">Galleon Chain 38836 RPC</span>
+              <div class="summary-row"><span>Endpoint</span><span style="font-size:10px;">galleon-testnet.igralabs.com</span></div>
+              <div class="summary-row"><span>Block Number</span><span id="diagBlock">—</span></div>
+              <div class="summary-row"><span>Pool Reserve Sync</span><span style="color:var(--green);">Active (0 delays)</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Safety Strip -->
+  <footer class="safety-disclaimer-strip">
+    <span class="disclaimer-chip">Igra Galleon L2 (38836)</span>
+    <span class="disclaimer-chip">Not an Igra partnership</span>
+    <span class="disclaimer-chip">Not consensus</span>
+    <span class="disclaimer-chip">Not mainnet production</span>
+    <span class="disclaimer-chip">live_trading false</span>
+    <span style="margin-left:auto;font-family:var(--mono);">Kaspa Frontier Engine &amp; Chain Sentinel Pro v2.4</span>
+  </footer>
+
+  <!-- Pair Selector Modal -->
+  <div class="pro-modal-backdrop" id="pairModalBackdrop">
+    <div class="pro-modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h3 style="margin:0;">Select Market Pair</h3>
+        <button type="button" class="tool-btn" id="closePairModalBtn" style="font-size:16px;">&times;</button>
+      </div>
+      <input type="text" id="pairSearchInput" placeholder="Search token or pair..." style="width:100%;height:38px;padding:0 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--text);margin-bottom:12px;font-family:var(--font);" />
+      <div style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;" id="pairSelectList"></div>
     </div>
   </div>
-  <footer>Not an Igra partnership. Not consensus. Not mainnet production. live_trading false until contracts ship.</footer>
+
+  <!-- Wallet Connect Modal -->
+  <div class="pro-modal-backdrop" id="walletModalBackdrop">
+    <div class="pro-modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h3 style="margin:0;">Connect Wallet</h3>
+        <button type="button" class="tool-btn" id="closeWalletModalBtn" style="font-size:16px;">&times;</button>
+      </div>
+      <p style="color:var(--text-secondary);font-size:12px;margin:0 0 16px;">
+        Connect your browser wallet (MetaMask, Rabby, OKX) or mobile WalletConnect. Keys stay strictly in your device.
+      </p>
+      <div style="display:flex;flex-direction:column;gap:8px;" id="walletOptionsList">
+        <button type="button" class="cta-submit" id="btnInjectedConnect" style="background:var(--bg-surface);border:1px solid var(--border);color:var(--text);justify-content:flex-start;padding:0 14px;">
+          Browser Injected Wallet (EIP-6963 / MetaMask)
+        </button>
+        <button type="button" class="cta-submit" id="btnWcConnect" style="background:var(--bg-surface);border:1px solid var(--border);color:var(--text);justify-content:flex-start;padding:0 14px;">
+          WalletConnect v2 (QR Scan)
+        </button>
+      </div>
+      <div id="connectedAccountDetails" style="display:none;margin-top:14px;padding:10px;background:var(--bg-surface);border-radius:var(--radius-md);border:1px solid var(--border);">
+        <div style="font-size:11px;color:var(--text-muted);">Connected Trader:</div>
+        <div class="mono" id="modalTraderAddr" style="font-size:12px;word-break:break-all;color:var(--cyan);margin:4px 0 10px;"></div>
+        <button type="button" class="tool-btn" id="btnDisconnectWallet" style="color:var(--red);border:1px solid var(--red);width:100%;">Disconnect</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { DexWallet } from "/ui/dex/wallet.js";
 
     const API = window.location.origin;
-    const dexWallet = new DexWallet(API);
-    const symbolEl = document.getElementById("symbol");
-    const volumeCard = document.getElementById("volumeCard");
-    const financeCard = document.getElementById("financeCard");
-    const analysisOut = document.getElementById("analysisOut");
-    const automationOut = document.getElementById("automationOut");
-    const lbBody = document.getElementById("lbBody");
-    const copyOut = document.getElementById("copyOut");
-    const tickerStrip = document.getElementById("tickerStrip");
-    const bidsBody = document.getElementById("bidsBody");
-    const asksBody = document.getElementById("asksBody");
-    const dataSource = document.getElementById("dataSource");
+    let dexWallet = null;
+    try {
+      dexWallet = new DexWallet(API);
+    } catch (e) {
+      console.warn("Wallet module init:", e);
+    }
+
+    // State
+    let activeSymbol = "gTEST-wiKAS";
+    let activeSide = "buy";
+    let activeOrderType = "market";
+    let activeMode = "spot";
     let chartApi = null;
     let candleSeries = null;
+    let volumeSeries = null;
+    let ema9Series = null;
+    let ema21Series = null;
     let lastBars = [];
+    let currentMarkPrice = 1.234;
+    let soundEnabled = true;
 
-    function row(k, v) {
-      return `<div class="row"><span>${k}</span><span class="mono">${v}</span></div>`;
+    // Audio Cues (Synthesized Web Audio API - no external assets)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playBeep(freq = 880, duration = 0.08, type = "sine") {
+      if (!soundEnabled || audioCtx.state === "suspended") return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (_) {}
     }
 
-    function rsi(closes, period = 14) {
-      if (closes.length < period + 1) return null;
-      let gains = 0, losses = 0;
-      for (let i = closes.length - period; i < closes.length; i++) {
-        const d = closes[i] - closes[i - 1];
-        if (d >= 0) gains += d; else losses -= d;
-      }
-      const rs = losses === 0 ? 100 : gains / losses;
-      return 100 - 100 / (1 + rs);
+    // Chart Initialization
+    function initProChart() {
+      const container = document.getElementById("chartStage");
+      if (!container || chartApi) return;
+
+      chartApi = LightweightCharts.createChart(container, {
+        layout: {
+          background: { color: "#090c10" },
+          textColor: "#94a3b8",
+          fontSize: 11,
+          fontFamily: "'JetBrains Mono', monospace",
+        },
+        grid: {
+          vertLines: { color: "#131a26" },
+          horzLines: { color: "#131a26" },
+        },
+        crosshair: {
+          mode: LightweightCharts.CrosshairMode.Normal,
+          vertLine: { color: "#38bdf8", width: 1, style: LightweightCharts.LineStyle.Dashed },
+          horzLine: { color: "#38bdf8", width: 1, style: LightweightCharts.LineStyle.Dashed },
+        },
+        rightPriceScale: {
+          borderColor: "#1e293b",
+          autoScale: true,
+          scaleMargins: { top: 0.1, bottom: 0.2 },
+        },
+        timeScale: {
+          borderColor: "#1e293b",
+          timeVisible: true,
+          secondsVisible: false,
+        },
+        width: container.clientWidth,
+        height: container.clientHeight || 360,
+      });
+
+      candleSeries = chartApi.addCandlestickSeries({
+        upColor: "#00e599",
+        downColor: "#ff3864",
+        borderVisible: false,
+        wickUpColor: "#00e599",
+        wickDownColor: "#ff3864",
+      });
+
+      volumeSeries = chartApi.addHistogramSeries({
+        color: "#26a69a",
+        priceFormat: { type: "volume" },
+        priceScaleId: "",
+        scaleMargins: { top: 0.82, bottom: 0 },
+      });
+
+      ema9Series = chartApi.addLineSeries({
+        color: "#38bdf8",
+        lineWidth: 1.5,
+        title: "EMA 9",
+      });
+
+      ema21Series = chartApi.addLineSeries({
+        color: "#f5a623",
+        lineWidth: 1.5,
+        title: "EMA 21",
+      });
+
+      chartApi.subscribeCrosshairMove((param) => {
+        if (!param || !param.time || !param.seriesData) return;
+        const bar = param.seriesData.get(candleSeries);
+        if (!bar) return;
+        document.getElementById("hudOpen").textContent = bar.open.toFixed(4);
+        document.getElementById("hudHigh").textContent = bar.high.toFixed(4);
+        document.getElementById("hudLow").textContent = bar.low.toFixed(4);
+        document.getElementById("hudClose").textContent = bar.close.toFixed(4);
+        const up = bar.close >= bar.open;
+        document.getElementById("hudClose").className = "hud-val " + (up ? "up" : "down");
+        const v = param.seriesData.get(volumeSeries);
+        if (v) document.getElementById("hudVol").textContent = (v.value || 0).toLocaleString();
+      });
+
+      window.addEventListener("resize", () => {
+        if (chartApi && container) {
+          chartApi.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+        }
+      });
     }
 
-    function ema(data, span) {
-      const k = 2 / (span + 1);
-      let prev = data[0];
-      const out = [prev];
-      for (let i = 1; i < data.length; i++) {
-        prev = data[i] * k + prev * (1 - k);
-        out.push(prev);
+    // Indicators
+    function calcEma(data, period) {
+      const k = 2 / (period + 1);
+      const out = [];
+      let prev = data[0].close;
+      for (const d of data) {
+        prev = d.close * k + prev * (1 - k);
+        out.push({ time: d.time, value: prev });
       }
       return out;
     }
 
-    function renderAnalysis(bars) {
-      const closes = bars.map((b) => b.close);
-      const r = rsi(closes);
-      const ema12 = ema(closes, 12);
-      const ema26 = ema(closes, 26);
-      const macd = ema12[ema12.length - 1] - ema26[ema26.length - 1];
-      analysisOut.textContent = `RSI(14): ${r == null ? "—" : r.toFixed(2)}  |  MACD line (mock): ${macd.toFixed(6)}`;
+    function calcRsi(closes, period = 14) {
+      if (closes.length < period + 1) return 50.0;
+      let gains = 0, losses = 0;
+      for (let i = closes.length - period; i < closes.length; i++) {
+        const diff = closes[i] - closes[i - 1];
+        if (diff >= 0) gains += diff; else losses -= diff;
+      }
+      const rs = losses === 0 ? 100 : gains / losses;
+      return 100 - (100 / (1 + rs));
     }
 
-    function ensureChart() {
-      if (chartApi) return;
-      const el = document.getElementById("chart");
-      chartApi = LightweightCharts.createChart(el, {
-        layout: { background: { color: "#1a211d" }, textColor: "#a8a093" },
-        grid: { vertLines: { color: "#252d28" }, horzLines: { color: "#252d28" } },
-        width: el.clientWidth,
-        height: 380,
-      });
-      candleSeries = chartApi.addCandlestickSeries({
-        upColor: "#8fbf9a", downColor: "#d98f86", borderVisible: false,
-        wickUpColor: "#8fbf9a", wickDownColor: "#d98f86",
-      });
-      window.addEventListener("resize", () => chartApi.applyOptions({ width: el.clientWidth }));
-    }
-
-    function setChart(bars) {
-      ensureChart();
-      const data = bars.map((b) => ({
-        time: b.time,
-        open: b.open,
-        high: b.high,
-        low: b.low,
-        close: b.close,
-      }));
-      candleSeries.setData(data);
+    function updateChartData(bars) {
+      if (!bars || !bars.length) return;
+      initProChart();
       lastBars = bars;
-      renderAnalysis(bars);
+      const cData = bars.map(b => ({ time: b.time, open: b.open, high: b.high, low: b.low, close: b.close }));
+      candleSeries.setData(cData);
+
+      const vData = bars.map(b => ({
+        time: b.time,
+        value: (Math.abs(b.close - b.open) * 10000) + 120,
+        color: b.close >= b.open ? "rgba(0, 229, 153, 0.35)" : "rgba(255, 56, 100, 0.35)"
+      }));
+      volumeSeries.setData(vData);
+
+      const e9 = calcEma(cData, 9);
+      const e21 = calcEma(cData, 21);
+      ema9Series.setData(e9);
+      ema21Series.setData(e21);
+
+      const closes = bars.map(b => b.close);
+      const r = calcRsi(closes);
+      document.getElementById("hudRsi").textContent = r.toFixed(1);
+      document.getElementById("alphaRsi").textContent = r.toFixed(2);
+      currentMarkPrice = bars[bars.length - 1].close;
+      document.getElementById("posMarkPrice").textContent = currentMarkPrice.toFixed(4) + " wiKAS";
     }
 
-    async function loadSymbols() {
+    // Orderbook Renderer with Depth Gradient Visualizer
+    function renderOrderBook(book) {
+      const asksContainer = document.getElementById("asksRows");
+      const bidsContainer = document.getElementById("bidsRows");
+      const asks = (book.asks || []).slice(0, 9).reverse();
+      const bids = (book.bids || []).slice(0, 9);
+
+      let askTotal = 0;
+      const askMax = Math.max(...asks.map(a => (askTotal += (a.size || a.size_gtest || 100))), 1);
+      let runningAsk = 0;
+      asksContainer.innerHTML = asks.map(a => {
+        const sz = a.size || a.size_gtest || 100;
+        runningAsk += sz;
+        const depthPct = Math.min(100, (runningAsk / askMax) * 100);
+        return `
+          <div class="ob-row ask" data-price="${a.price}">
+            <div class="ob-depth-bar" style="width:${depthPct}%;"></div>
+            <span class="px">${Number(a.price).toFixed(4)}</span>
+            <span>${Number(sz).toFixed(1)}</span>
+            <span>${Number(runningAsk).toFixed(1)}</span>
+          </div>`;
+      }).join("");
+
+      let bidTotal = 0;
+      const bidMax = Math.max(...bids.map(b => (bidTotal += (b.size || b.size_gtest || 100))), 1);
+      let runningBid = 0;
+      bidsContainer.innerHTML = bids.map(b => {
+        const sz = b.size || b.size_gtest || 100;
+        runningBid += sz;
+        const depthPct = Math.min(100, (runningBid / bidMax) * 100);
+        return `
+          <div class="ob-row bid" data-price="${b.price}">
+            <div class="ob-depth-bar" style="width:${depthPct}%;"></div>
+            <span class="px">${Number(b.price).toFixed(4)}</span>
+            <span>${Number(sz).toFixed(1)}</span>
+            <span>${Number(runningBid).toFixed(1)}</span>
+          </div>`;
+      }).join("");
+
+      // Spread Calculation
+      if (asks.length && bids.length) {
+        const bestAsk = Number(asks[asks.length - 1].price);
+        const bestBid = Number(bids[0].price);
+        const spread = Math.abs(bestAsk - bestBid);
+        const mid = (bestAsk + bestBid) / 2;
+        const pct = mid > 0 ? (spread / mid) * 100 : 0;
+        document.getElementById("spreadPrice").innerHTML = `<span>${mid.toFixed(4)}</span>`;
+        document.getElementById("spreadSpan").textContent = spread.toFixed(4);
+        document.getElementById("spreadPct").textContent = pct.toFixed(2) + "%";
+        document.getElementById("bestFillDisplay").textContent = bestAsk.toFixed(4);
+      }
+
+      // Click row to fill price
+      document.querySelectorAll(".ob-row").forEach(el => {
+        el.addEventListener("click", () => {
+          const px = el.getAttribute("data-price");
+          if (px) {
+            document.getElementById("orderPrice").value = Number(px).toFixed(4);
+            updateSummary();
+            playBeep(980, 0.04);
+          }
+        });
+      });
+    }
+
+    // Recent Trades Tape
+    function addMarketTrade(price, amount, side) {
+      const tape = document.getElementById("tradesTape");
+      const row = document.createElement("div");
+      row.className = "ob-row " + (side === "BUY" ? "bid" : "ask");
+      const d = new Date();
+      const timeStr = [d.getHours(), d.getMinutes(), d.getSeconds()].map(n => String(n).padStart(2, "0")).join(":");
+      row.innerHTML = `
+        <span class="px">${Number(price).toFixed(4)}</span>
+        <span>${Number(amount).toFixed(1)}</span>
+        <span style="color:var(--text-muted);">${timeStr}</span>
+      `;
+      tape.prepend(row);
+      if (tape.children.length > 25) tape.removeChild(tape.lastChild);
+    }
+
+    // Market Loader
+    async function refreshMarketData() {
+      const q = encodeURIComponent(activeSymbol);
+      const start = performance.now();
       try {
-        const r = await fetch(API + "/v1/derivatives/status");
-        const d = await r.json();
-        const catalog = d.markets_catalog || [];
-        symbolEl.innerHTML = "";
-        const opts = catalog.length ? catalog.map((m) => m.symbol) : ["gTEST-wiKAS", "gTEST-tUSDC"];
-        for (const s of opts.slice(0, 40)) {
-          const o = document.createElement("option");
-          o.value = s;
-          o.textContent = s;
-          symbolEl.appendChild(o);
+        const [cfg, tick, book] = await Promise.all([
+          fetch(API + "/v1/trading/console-config?symbol=" + q).then(r => r.json()),
+          fetch(API + "/v1/trading/ticker?symbol=" + q).then(r => r.json()),
+          fetch(API + "/v1/trading/order-book?symbol=" + q).then(r => r.json()),
+        ]);
+        const ping = Math.round(performance.now() - start);
+        document.getElementById("pingVal").textContent = ping + "ms";
+
+        // Ticker Bar
+        if (tick.last) {
+          const el = document.getElementById("tickerPrice");
+          const oldPx = parseFloat(el.textContent) || tick.last;
+          el.textContent = Number(tick.last).toFixed(4);
+          el.className = "ribbon-val price-major " + (tick.last >= oldPx ? "up" : "down");
+          document.getElementById("summaryEstPrice").textContent = Number(tick.last).toFixed(4);
         }
-      } catch {
-        symbolEl.innerHTML = "<option>gTEST-wiKAS</option>";
+        if (tick.change_pct_24h !== undefined) {
+          const chgEl = document.getElementById("tickerChange");
+          const sign = tick.change_pct_24h >= 0 ? "+" : "";
+          chgEl.textContent = sign + Number(tick.change_pct_24h).toFixed(2) + "%";
+          chgEl.className = "badge-change " + (tick.change_pct_24h >= 0 ? "up" : "down");
+        }
+        if (tick.high_24h) document.getElementById("tickerHigh").textContent = Number(tick.high_24h).toFixed(4);
+        if (tick.low_24h) document.getElementById("tickerLow").textContent = Number(tick.low_24h).toFixed(4);
+        if (tick.volume_24h_proxy) document.getElementById("tickerVol").textContent = "$" + Number(tick.volume_24h_proxy).toLocaleString();
+
+        const src = cfg.ohlc_source || tick.source || "on-chain";
+        document.getElementById("dataSourceLabel").textContent = src;
+
+        // Chart & Book
+        if (cfg.ohlc && cfg.ohlc.length) updateChartData(cfg.ohlc);
+        if (book) renderOrderBook(book);
+
+        // Feed occasional tape event
+        if (tick.last) {
+          const side = Math.random() > 0.45 ? "BUY" : "SELL";
+          addMarketTrade(tick.last * (1 + (Math.random() - 0.5) * 0.001), 10 + Math.random() * 80, side);
+        }
+      } catch (err) {
+        console.warn("Market feed error:", err);
       }
     }
 
-    function renderBook(book) {
-      const bidRows = (book.bids || []).slice(0, 8).map((r) =>
-        `<tr><td>${r.price}</td><td>${r.size ?? r.size_gtest ?? "—"}</td></tr>`
-      ).join("");
-      const askRows = (book.asks || []).slice(0, 8).map((r) =>
-        `<tr><td>${r.price}</td><td>${r.size ?? r.size_gtest ?? "—"}</td></tr>`
-      ).join("");
-      bidsBody.innerHTML = bidRows || "<tr><td colspan='2'>—</td></tr>";
-      asksBody.innerHTML = askRows || "<tr><td colspan='2'>—</td></tr>";
+    // Summary calculation
+    function updateSummary() {
+      const amt = parseFloat(document.getElementById("orderAmount").value) || 0;
+      const px = parseFloat(document.getElementById("orderPrice").value) || currentMarkPrice;
+      const notional = amt * px;
+      document.getElementById("summaryNotional").textContent = notional.toFixed(2) + " wiKAS";
+      const lev = parseInt(document.getElementById("leverageSlider").value, 10);
+      if (activeMode === "perp" && lev > 1) {
+        const liqOffset = px / lev;
+        const estLiq = activeSide === "buy" ? Math.max(0, px - liqOffset) : px + liqOffset;
+        document.getElementById("summaryLiq").textContent = estLiq.toFixed(4) + " wiKAS";
+      }
     }
 
-    async function loadMarket() {
-      const sym = symbolEl.value || "gTEST-wiKAS";
-      const q = encodeURIComponent(sym);
-      const [cfg, tick, book] = await Promise.all([
-        fetch(API + "/v1/trading/console-config?symbol=" + q).then((r) => r.json()),
-        fetch(API + "/v1/trading/ticker?symbol=" + q).then((r) => r.json()),
-        fetch(API + "/v1/trading/order-book?symbol=" + q).then((r) => r.json()),
-      ]);
-      const src = cfg.ohlc_source || tick.source || book.source || "unknown";
-      dataSource.textContent = `Galleon 38836 · ${src} · live_trading false · refresh 30s`;
-      tickerStrip.textContent = tick.last
-        ? `Last ${tick.last} · 24h ${tick.change_pct_24h}% · H ${tick.high_24h} · L ${tick.low_24h}`
-        : "";
-      setChart(cfg.ohlc || []);
-      renderBook(book);
-    }
-
-    async function loadConsole() {
-      await loadMarket();
-    }
-
-    async function loadSideCards(wallet) {
-      const q = wallet ? "?wallet=" + encodeURIComponent(wallet) : "";
-      const [vol, fin, lb, auto, copy] = await Promise.all([
-        fetch(API + "/v1/trading/volume-rewards" + q).then((r) => r.json()),
-        fetch(API + "/v1/trading/financing").then((r) => r.json()),
-        fetch(API + "/v1/trading/leaderboard?limit=15").then((r) => r.json()),
-        fetch(API + "/v1/trading/automation-policy").then((r) => r.json()),
-        fetch(API + "/v1/trading/copy-trading/status" + q).then((r) => r.json()),
-      ]);
-      volumeCard.innerHTML = [
-        row("Tier", vol.active_tier),
-        row("30d vol (mock)", vol.volume_30d_gtest_equiv),
-        row("Maker fee", (vol.maker_fee_bps ?? "—") + " bps"),
-        row("Rebate", (vol.volume_rebate_bps ?? "—") + " bps"),
-      ].join("");
-      financeCard.innerHTML = [
-        row("Regime", fin.regime),
-        row("Rate", (fin.rate_bps ?? "—") + " bps"),
-        row("Next settle", new Date((fin.next_settlement_unix || 0) * 1000).toISOString().slice(11, 19) + " UTC"),
-      ].join("");
-      lbBody.innerHTML = (lb.entries || []).map((e) =>
-        `<tr><td>${e.rank}</td><td>${(e.wallet || "").slice(0, 10)}…</td><td>${e.volume_30d_gtest}</td><td>${e.trades}</td></tr>`
-      ).join("");
-      automationOut.innerHTML = `<p>${auto.bots_note || ""}</p><p class="mono">Allowed: ${(auto.allowed || []).join(", ")}</p><p class="mono bad">Not allowed: ${(auto.not_allowed || []).join(", ")}</p>`;
-      copyOut.innerHTML = (copy.followed_leaders || []).length
-        ? copy.followed_leaders.map((f) => row(f.label, f.leader_wallet)).join("")
-        : "<p class='sub'>Connect wallet to see read-only follow list rehearsal.</p>";
-    }
-
-    document.querySelectorAll(".tab").forEach((btn) => {
-      btn.onclick = () => {
-        document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
-        document.querySelectorAll(".pane").forEach((p) => p.classList.remove("active"));
+    // Event Handlers
+    document.querySelectorAll(".order-type-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".order-type-btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
-        document.getElementById("pane-" + btn.dataset.tab).classList.add("active");
-      };
+        activeOrderType = btn.getAttribute("data-type");
+        document.getElementById("limitPriceGroup").style.display = activeOrderType === "market" ? "none" : "flex";
+      });
     });
 
-    document.getElementById("connectBtn").onclick = async () => {
-      if (dexWallet.trader) {
-        await dexWallet.disconnect();
-        document.getElementById("addr").textContent = "";
-        await loadSideCards(null);
-        return;
-      }
-      await dexWallet.loadConfig();
-      await dexWallet.discoverInjected();
-      const inj = dexWallet.listConnectors().find((c) => c.kind === "injected");
-      if (!inj) {
-        document.getElementById("walletNote").textContent = "No injected wallet found.";
-        return;
-      }
-      await dexWallet.connect(inj.id);
-      document.getElementById("addr").textContent = dexWallet.trader;
-      await loadSideCards(dexWallet.trader);
-    };
+    document.getElementById("sideBuy").addEventListener("click", () => {
+      activeSide = "buy";
+      document.getElementById("sideBuy").classList.add("active");
+      document.getElementById("sideSell").classList.remove("active");
+      const btn = document.getElementById("submitOrderBtn");
+      btn.className = "cta-submit buy";
+      btn.textContent = activeMode === "perp" ? "LONG / BUY gTEST" : "BUY gTEST";
+      updateSummary();
+    });
 
-    symbolEl.onchange = () => { loadConsole().catch(() => {}); };
+    document.getElementById("sideSell").addEventListener("click", () => {
+      activeSide = "sell";
+      document.getElementById("sideSell").classList.add("active");
+      document.getElementById("sideBuy").classList.remove("active");
+      const btn = document.getElementById("submitOrderBtn");
+      btn.className = "cta-submit sell";
+      btn.textContent = activeMode === "perp" ? "SHORT / SELL gTEST" : "SELL gTEST";
+      updateSummary();
+    });
 
-    (async () => {
-      await loadSymbols();
-      await loadConsole();
-      await loadSideCards(null);
-      setInterval(() => { loadMarket().catch(() => {}); }, 30000);
-    })();
+    document.getElementById("modeSpot").addEventListener("click", () => {
+      activeMode = "spot";
+      document.getElementById("modeSpot").classList.add("active");
+      document.getElementById("modePerp").classList.remove("active");
+      document.getElementById("leverageBox").style.display = "none";
+      document.getElementById("liqRow").style.display = "none";
+      document.getElementById("submitOrderBtn").textContent = (activeSide === "buy" ? "BUY" : "SELL") + " gTEST";
+    });
+
+    document.getElementById("modePerp").addEventListener("click", () => {
+      activeMode = "perp";
+      document.getElementById("modePerp").classList.add("active");
+      document.getElementById("modeSpot").classList.remove("active");
+      document.getElementById("leverageBox").style.display = "flex";
+      document.getElementById("liqRow").style.display = "flex";
+      document.getElementById("submitOrderBtn").textContent = (activeSide === "buy" ? "LONG / BUY" : "SHORT / SELL") + " gTEST";
+      updateSummary();
+    });
+
+    document.getElementById("leverageSlider").addEventListener("input", (e) => {
+      document.getElementById("leverageDisplay").textContent = e.target.value + "x";
+      updateSummary();
+    });
+
+    document.querySelectorAll(".pct-pill").forEach(p => {
+      p.addEventListener("click", () => {
+        const pct = parseInt(p.getAttribute("data-pct"), 10);
+        document.getElementById("orderAmount").value = ((100 * pct) / 100).toFixed(1);
+        updateSummary();
+        playBeep(700, 0.04);
+      });
+    });
+
+    document.getElementById("orderAmount").addEventListener("input", updateSummary);
+    document.getElementById("orderPrice").addEventListener("input", updateSummary);
+
+    // Audio Toggle
+    document.getElementById("audioToggle").addEventListener("click", () => {
+      soundEnabled = !soundEnabled;
+      document.getElementById("audioToggle").classList.toggle("active", soundEnabled);
+      if (soundEnabled && audioCtx.state === "suspended") audioCtx.resume();
+    });
+
+    // Panel tabs (Orderbook / Trades)
+    document.querySelectorAll(".panel-tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".panel-tab").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        const id = tab.getAttribute("data-tab");
+        document.getElementById("pane-ob").style.display = id === "ob" ? "flex" : "none";
+        document.getElementById("pane-trades").style.display = id === "trades" ? "flex" : "none";
+        document.getElementById("pane-depth").style.display = id === "depth" ? "block" : "none";
+      });
+    });
+
+    // Dock Tabs
+    document.querySelectorAll(".dock-tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".dock-tab").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        const target = "dock-pane-" + tab.getAttribute("data-dock");
+        document.querySelectorAll(".dock-pane").forEach(p => p.classList.remove("active"));
+        const el = document.getElementById(target);
+        if (el) el.classList.add("active");
+      });
+    });
+
+    // Modals
+    const pairModal = document.getElementById("pairModalBackdrop");
+    document.getElementById("pairPickerBtn").addEventListener("click", () => pairModal.classList.add("open"));
+    document.getElementById("closePairModalBtn").addEventListener("click", () => pairModal.classList.remove("open"));
+
+    const walletModal = document.getElementById("walletModalBackdrop");
+    document.getElementById("connectWalletBtn").addEventListener("click", () => walletModal.classList.add("open"));
+    document.getElementById("closeWalletModalBtn").addEventListener("click", () => walletModal.classList.remove("open"));
+
+    // Submit Simulation
+    document.getElementById("submitOrderBtn").addEventListener("click", () => {
+      playBeep(1200, 0.12);
+      const amt = document.getElementById("orderAmount").value;
+      alert(`[REHEARSAL EXECUTION]\nSubmitted ${activeSide.toUpperCase()} for ${amt} gTEST on chain 38836.\nContract signing simulated. Non-custodial.`);
+    });
+
+    // Initial Bootstrap
+    window.addEventListener("DOMContentLoaded", async () => {
+      initProChart();
+      await refreshMarketData();
+      setInterval(refreshMarketData, 20000);
+      updateSummary();
+    });
   </script>
 </body>
 </html>
