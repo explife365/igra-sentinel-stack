@@ -13,6 +13,12 @@ SELECTOR_GET_RESERVES = "0x0902f1ac"
 GTEST_DECIMALS = 18
 WIKAS_DECIMALS = 18
 
+_OHLC_CACHE: dict[tuple[str, int], tuple[float, list[dict[str, Any]], dict[str, Any]]] = {}
+
+
+def _ohlc_cache_ttl() -> float:
+    return float(os.environ.get("TRADING_OHLC_CACHE_SECS") or "90")
+
 
 def _rpc() -> str:
     return (os.environ.get("GALLEON_RPC") or GALLEON_RPC_DEFAULT).strip()
@@ -69,14 +75,6 @@ def _latest_block() -> int:
     return int(hex_num, 16)
 
 
-def _block_ts(block_number: int) -> int:
-    result = rpc_call(_rpc(), "eth_getBlockByNumber", [_block_hex(block_number), False])
-    if not isinstance(result, dict):
-        return int(time.time())
-    ts = result.get("timestamp") or "0x0"
-    return int(ts, 16) if str(ts).startswith("0x") else int(ts or 0)
-
-
 def spot_mid(symbol: str) -> tuple[float, dict[str, Any]]:
     pool = _pool()
     meta: dict[str, Any] = {"source": "mock_rehearsal"}
@@ -97,6 +95,12 @@ def spot_mid(symbol: str) -> tuple[float, dict[str, Any]]:
 
 
 def ohlc_series(symbol: str, bars: int = 72) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    bars = max(12, min(int(bars), 96))
+    cache_key = (symbol, bars)
+    hit = _OHLC_CACHE.get(cache_key)
+    if hit and (time.time() - hit[0]) <= _ohlc_cache_ttl():
+        return hit[1], hit[2]
+
     pool = _pool()
     meta: dict[str, Any] = {"source": "mock_rehearsal_series"}
     if not pool:
@@ -109,7 +113,6 @@ def ohlc_series(symbol: str, bars: int = 72) -> tuple[list[dict[str, Any]], dict
     except Exception:
         return [], meta
     step = max(1, int(os.environ.get("TRADING_OHLC_STEP_BLOCKS") or "60"))
-    bars = max(12, min(int(bars), 96))
     nums = [max(0, latest - (bars - 1 - i) * step) for i in range(bars)]
     closes: list[tuple[int, float]] = []
     for bn in nums:
@@ -122,9 +125,10 @@ def ohlc_series(symbol: str, bars: int = 72) -> tuple[list[dict[str, Any]], dict
             continue
     if len(closes) < 3:
         return [], meta
+    step_secs = max(60, step * 2)
     series: list[dict[str, Any]] = []
     for i, (bn, close) in enumerate(closes):
-        ts = _block_ts(bn)
+        ts = int(time.time()) - (len(closes) - 1 - i) * step_secs
         open_ = closes[i - 1][1] if i else close
         series.append(
             {
@@ -142,5 +146,7 @@ def ohlc_series(symbol: str, bars: int = 72) -> tuple[list[dict[str, Any]], dict
         "rpc": _rpc(),
         "step_blocks": step,
         "bars": len(series),
+        "timestamps": "synthetic_step",
     }
+    _OHLC_CACHE[cache_key] = (time.time(), series, meta)
     return series, meta
