@@ -53,7 +53,7 @@
   <header>
     <div>
       <h1>Trading console (rehearsal)</h1>
-      <p class="sub">Galleon chain 38836 · mock OHLC · not live trading</p>
+      <p class="sub" id="dataSource">Galleon chain 38836 · loading market data…</p>
     </div>
     <nav>
       <a href="/ui/dex/">DEX hub</a>
@@ -71,8 +71,16 @@
       <div class="chart-wrap">
         <label>Symbol</label>
         <select id="symbol"></select>
+        <div id="tickerStrip" class="mono" style="font-size:.75rem;margin:.35rem 0;color:var(--muted);"></div>
         <div id="chart"></div>
       </div>
+      <section style="margin-top:.6rem;">
+        <h2>Order book (pool reserves)</h2>
+        <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;">
+          <div><strong class="sub">Bids</strong><table><thead><tr><th>Price</th><th>Size</th></tr></thead><tbody id="bidsBody"></tbody></table></div>
+          <div><strong class="sub">Asks</strong><table><thead><tr><th>Price</th><th>Size</th></tr></thead><tbody id="asksBody"></tbody></table></div>
+        </div>
+      </section>
       <section style="margin-top:.6rem;">
         <div class="tabs">
           <button type="button" class="tab active" data-tab="analysis">Analysis</button>
@@ -81,7 +89,7 @@
           <button type="button" class="tab" data-tab="copy">Copy trading</button>
         </div>
         <div id="pane-analysis" class="pane active">
-          <p class="sub">RSI / MACD computed client-side on mock series (not investment advice).</p>
+          <p class="sub">RSI / MACD on live pool-implied OHLC (not investment advice).</p>
           <div id="analysisOut" class="mono"></div>
         </div>
         <div id="pane-automation" class="pane">
@@ -109,7 +117,7 @@
         <div id="volumeCard">Loading…</div>
       </section>
       <section>
-        <h2>Financing (mock)</h2>
+        <h2>Financing (block-anchored stub)</h2>
         <div id="financeCard">Loading…</div>
       </section>
     </div>
@@ -127,6 +135,10 @@
     const automationOut = document.getElementById("automationOut");
     const lbBody = document.getElementById("lbBody");
     const copyOut = document.getElementById("copyOut");
+    const tickerStrip = document.getElementById("tickerStrip");
+    const bidsBody = document.getElementById("bidsBody");
+    const asksBody = document.getElementById("asksBody");
+    const dataSource = document.getElementById("dataSource");
     let chartApi = null;
     let candleSeries = null;
     let lastBars = [];
@@ -214,10 +226,36 @@
       }
     }
 
-    async function loadConsole() {
+    function renderBook(book) {
+      const bidRows = (book.bids || []).slice(0, 8).map((r) =>
+        `<tr><td>${r.price}</td><td>${r.size ?? r.size_gtest ?? "—"}</td></tr>`
+      ).join("");
+      const askRows = (book.asks || []).slice(0, 8).map((r) =>
+        `<tr><td>${r.price}</td><td>${r.size ?? r.size_gtest ?? "—"}</td></tr>`
+      ).join("");
+      bidsBody.innerHTML = bidRows || "<tr><td colspan='2'>—</td></tr>";
+      asksBody.innerHTML = askRows || "<tr><td colspan='2'>—</td></tr>";
+    }
+
+    async function loadMarket() {
       const sym = symbolEl.value || "gTEST-wiKAS";
-      const cfg = await fetch(API + "/v1/trading/console-config?symbol=" + encodeURIComponent(sym)).then((r) => r.json());
+      const q = encodeURIComponent(sym);
+      const [cfg, tick, book] = await Promise.all([
+        fetch(API + "/v1/trading/console-config?symbol=" + q).then((r) => r.json()),
+        fetch(API + "/v1/trading/ticker?symbol=" + q).then((r) => r.json()),
+        fetch(API + "/v1/trading/order-book?symbol=" + q).then((r) => r.json()),
+      ]);
+      const src = cfg.ohlc_source || tick.source || book.source || "unknown";
+      dataSource.textContent = `Galleon 38836 · ${src} · live_trading false · refresh 30s`;
+      tickerStrip.textContent = tick.last
+        ? `Last ${tick.last} · 24h ${tick.change_pct_24h}% · H ${tick.high_24h} · L ${tick.low_24h}`
+        : "";
       setChart(cfg.ohlc || []);
+      renderBook(book);
+    }
+
+    async function loadConsole() {
+      await loadMarket();
     }
 
     async function loadSideCards(wallet) {
@@ -283,6 +321,7 @@
       await loadSymbols();
       await loadConsole();
       await loadSideCards(null);
+      setInterval(() => { loadMarket().catch(() => {}); }, 30000);
     })();
   </script>
 </body>

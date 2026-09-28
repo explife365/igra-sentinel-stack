@@ -385,27 +385,38 @@ def order_types_policy() -> dict[str, Any]:
 
 
 def _mid_price(symbol: str) -> float:
+    from sentinel_stack.onchain_market import spot_mid
+
+    px, meta = spot_mid(symbol)
+    if px > 0 and meta.get("source") != "mock_rehearsal":
+        return px
     series = _mock_ohlc_series(symbol, bars=2)
     return float(series[-1]["close"]) if series else 1.0
 
 
 def order_book(symbol: str | None = None, depth: int = 12) -> dict[str, Any]:
     sym = (symbol or os.environ.get("TRADING_DEFAULT_SYMBOL") or "gTEST-wiKAS").strip()
-    mid = _mid_price(sym)
+    from sentinel_stack.onchain_market import spot_mid
+
+    mid, meta = spot_mid(sym)
+    if mid <= 0:
+        mid = _mid_price(sym)
+        meta = {"source": "mock_rehearsal"}
     bids: list[dict[str, Any]] = []
     asks: list[dict[str, Any]] = []
+    depth = max(4, min(int(depth), 24))
     for i in range(depth):
-        spread = 0.0005 * (i + 1)
-        size = round(1000.0 / (i + 1), 2)
-        bids.append({"price": round(mid * (1.0 - spread), 6), "size_gtest": size})
-        asks.append({"price": round(mid * (1.0 + spread), 6), "size_gtest": size})
+        spread = 0.0015 * (i + 1)
+        bids.append({"price": round(mid * (1.0 - spread), 8), "size": round(500.0 / (i + 1), 4)})
+        asks.append({"price": round(mid * (1.0 + spread), 8), "size": round(500.0 / (i + 1), 4)})
     out = _rehearsal_flags()
     out.update(
         {
             "service": "galleon_order_book",
             "symbol": sym,
-            "mid_price": round(mid, 6),
-            "source": "mock_rehearsal",
+            "mid_price": round(mid, 8),
+            "source": meta.get("source"),
+            "price_meta": meta,
             "bids": bids,
             "asks": asks,
         }
@@ -415,7 +426,12 @@ def order_book(symbol: str | None = None, depth: int = 12) -> dict[str, Any]:
 
 def ticker_24h(symbol: str | None = None) -> dict[str, Any]:
     sym = (symbol or os.environ.get("TRADING_DEFAULT_SYMBOL") or "gTEST-wiKAS").strip()
-    series = _mock_ohlc_series(sym, bars=48)
+    from sentinel_stack.onchain_market import ohlc_series
+
+    series, meta = ohlc_series(sym, bars=48)
+    if not series:
+        series = _mock_ohlc_series(sym, bars=48)
+        meta = {"source": "mock_rehearsal_series"}
     closes = [float(b["close"]) for b in series]
     highs = [float(b["high"]) for b in series]
     lows = [float(b["low"]) for b in series]
@@ -431,10 +447,11 @@ def ticker_24h(symbol: str | None = None) -> dict[str, Any]:
             "high_24h": round(max(highs), 6),
             "low_24h": round(min(lows), 6),
             "change_pct_24h": round((last - open_) / open_ * 100.0, 4) if open_ else 0.0,
-            "volume_24h_gtest": round(
-                sum(abs(closes[i] - closes[i - 1]) for i in range(1, len(closes))) * 10_000, 2
+            "volume_24h_proxy": round(
+                sum(abs(closes[i] - closes[i - 1]) for i in range(1, len(closes))) * 1_000, 4
             ),
-            "source": "mock_rehearsal",
+            "source": meta.get("source"),
+            "market_meta": meta,
         }
     )
     return out
@@ -442,14 +459,21 @@ def ticker_24h(symbol: str | None = None) -> dict[str, Any]:
 
 def console_config(symbol: str | None = None) -> dict[str, Any]:
     sym = (symbol or os.environ.get("TRADING_DEFAULT_SYMBOL") or "gTEST-wiKAS").strip()
+    from sentinel_stack.onchain_market import ohlc_series
+
+    ohlc, ohlc_meta = ohlc_series(sym, bars=int(os.environ.get("TRADING_OHLC_BARS") or "72"))
+    if not ohlc:
+        ohlc = _mock_ohlc_series(sym)
+        ohlc_meta = {"source": "mock_rehearsal_series"}
     out = _rehearsal_flags()
     out.update(
         {
             "service": "galleon_trading_console",
             "default_symbol": sym,
             "chart_library": "lightweight-charts (TradingView OSS)",
-            "ohlc_source": "mock_rehearsal_series",
-            "ohlc": _mock_ohlc_series(sym),
+            "ohlc_source": ohlc_meta.get("source"),
+            "ohlc_meta": ohlc_meta,
+            "ohlc": ohlc,
             "analysis": {"rsi_period": 14, "macd": [12, 26, 9], "computed_client_side": True},
             "endpoints": {
                 "volume_rewards": "/v1/trading/volume-rewards",
