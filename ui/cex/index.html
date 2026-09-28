@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CEX rehearsal — fail closed</title>
+  <style>
+    :root {
+      --paper: #f4f1ea;
+      --ink: #1c1915;
+      --muted: #5e584f;
+      --line: #d9d2c5;
+      --red: #8d2b2b;
+      --redbg: #f8e8e4;
+      --ok: #1f6b45;
+      --font: "Segoe UI", system-ui, sans-serif;
+      --mono: ui-monospace, "Cascadia Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font); line-height: 1.45; }
+    a { color: var(--ink); }
+    header {
+      display: flex; justify-content: space-between; gap: 1rem; align-items: flex-end;
+      padding: 1.1rem 1.3rem .9rem; border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0; font-size: 1.35rem; font-weight: 650; }
+    .sub { margin: .3rem 0 0; color: var(--muted); max-width: 40rem; }
+    nav { display: flex; gap: .7rem; font-size: .88rem; }
+    main { max-width: 880px; margin: 0 auto; padding: 1.1rem 1.3rem 2rem; display: grid; gap: .9rem; }
+    .gate {
+      background: var(--redbg);
+      border: 1px solid #e2b2aa;
+      border-left: 6px solid var(--red);
+      padding: .9rem 1rem;
+    }
+    .gate strong { color: var(--red); font-size: 1.05rem; }
+    section { border: 1px solid var(--line); background: #fffdf8; padding: .9rem 1rem; }
+    h2 { margin: 0 0 .5rem; font-size: .95rem; }
+    ul { margin: 0; padding-left: 1.1rem; }
+    li { margin: .28rem 0; }
+    .row { display: flex; justify-content: space-between; gap: 1rem; padding: .35rem 0; border-bottom: 1px solid var(--line); font-size: .9rem; }
+    .row span:first-child { color: var(--muted); }
+    .mono { font-family: var(--mono); font-size: .78rem; }
+    button {
+      font: inherit; background: transparent; border: 1px solid var(--line); padding: .4rem .7rem; cursor: pointer;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .chip { font-size: .72rem; letter-spacing: .04em; text-transform: uppercase; border: 1px solid #c8b48a; padding: .18rem .45rem; }
+    footer { color: var(--muted); font-size: .8rem; padding: 0 1.3rem 1.5rem; max-width: 880px; margin: 0 auto; }
+  </style>
+</head>
+<body data-surface="cex">
+  <header>
+    <div>
+      <h1>CEX rehearsal</h1>
+      <p class="sub">Fail closed. This is not CEX custody. Not an Igra partnership. Not consensus. Not mainnet production.</p>
+    </div>
+    <nav>
+      <a href="https://sentinel.tuce.app">Sentinel</a>
+      <a href="https://dex.tuce.app">DEX rehearsal</a>
+    </nav>
+  </header>
+  <main>
+    <div class="gate">
+      <strong>Owned-node gate: red</strong>
+      <p>Custody not started. This gate reads 127.0.0.1:18210 on this host only. Another machine does not count. Kaspa wRPC stays on loopback, so a remote gate cannot see it. A loopback socket is not custody.</p>
+    </div>
+    <section><h2>Integrator sync (host03)</h2><p id="integratorSync">Owned-gate sync runs on the host03 integrator loopback. Public CEX custody is not started here.</p></section>
+    <div class="chips">
+      <span class="chip">Not an Igra partnership</span>
+      <span class="chip">Not consensus</span>
+      <span class="chip">Not mainnet production</span>
+    </div>
+    <section>
+      <h2>Refused on this host</h2>
+      <ul>
+        <li>Orders: not shipped</li>
+        <li>Withdrawals: not shipped</li>
+        <li>Broadcast: not shipped</li>
+        <li id="keyLine">No PRIVATE_KEY variable is part of this rehearsal. Custody actions stay refused.</li>
+      </ul>
+    </section>
+    <section>
+      <h2>Custody listener</h2>
+      <p id="listener">Checking loopback port 8787. This page does not start a listener.</p>
+    </section>
+    <section>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem">
+        <h2 style="margin:0">Loopback kaspa wRPC</h2>
+        <button type="button" id="refresh">Refresh status</button>
+      </div>
+      <p id="tn10">The page is already up. A short read of 127.0.0.1:18210 follows. It is not proxied and it is not public.</p>
+      <div id="tn10rows"></div>
+    </section>
+  </main>
+  <footer>
+    Custody not started. No order, withdrawal, or broadcast control is on this page.
+    Not an Igra partnership. Not consensus. Not mainnet production.
+  </footer>
+  <script>
+    const listenerEl = document.getElementById("listener");
+    const keyLine = document.getElementById("keyLine");
+    const tn10El = document.getElementById("tn10");
+    const rowsEl = document.getElementById("tn10rows");
+
+    function row(k, v) {
+      return `<div class="row"><span>${k}</span><span class="mono">${v}</span></div>`;
+    }
+
+    function render(body) {
+      const listener = body.custody_listener || {};
+      if (listener.open) {
+        listenerEl.textContent = "Loopback port 8787 is accepting connections. Sentinel did not start it and does not use it. Custody not started.";
+      } else {
+        listenerEl.textContent = "No custody listener on 127.0.0.1:8787. Custody not started.";
+      }
+      if (body.private_key_in_process_env) {
+        keyLine.textContent = "A PRIVATE_KEY name is present in the sentinel process. Custody actions stay refused. The name is not shown here.";
+      } else {
+        keyLine.textContent = "No PRIVATE_KEY name in the sentinel process. Custody not started.";
+      }
+      const sync = body.integrator_sync || {};
+      const syncEl = document.getElementById("integratorSync");
+      if (syncEl) {
+        let line = sync.summary || syncEl.textContent;
+        if (sync.probe === "ok" && sync.owned_gate_green === true) {
+          line += " Internal probe: owned_gate green on host03.";
+        } else if (sync.probe === "unreachable") {
+          line += " Internal probe could not reach host03 (loopback-only integrator).";
+        }
+        syncEl.textContent = line;
+      }
+      const gate = body.owned_node_gate || {};
+      const gateNote = document.querySelector(".gate p");
+      if (gateNote && gate.reason) gateNote.textContent = gate.reason;
+      const tn = body.tn10 || {};
+      if (!tn.listening) {
+        tn10El.textContent = "127.0.0.1:18210 is not accepting connections. Not proxied. Owned-node gate stays red.";
+        rowsEl.innerHTML = "";
+        return;
+      }
+      if (!tn.answered) {
+        tn10El.textContent = "127.0.0.1:18210 accepted a connection. The short wRPC read did not return a status. Not proxied. Owned-node gate stays red.";
+        rowsEl.innerHTML = "";
+        return;
+      }
+      tn10El.textContent = "Read from loopback only. Not exposed publicly. This API does not proxy wRPC. Owned-node gate stays red.";
+      rowsEl.innerHTML = [
+        row("Network id", tn.network_id || "not provided"),
+        row("Synced", tn.is_synced === true ? "yes" : (tn.is_synced === false ? "no" : "—")),
+        row("UTXO index", tn.has_utxo_index === true ? "yes" : (tn.has_utxo_index === false ? "no" : "—")),
+        row("Headers", tn.header_count ?? "—"),
+        row("Blocks", tn.block_count ?? "—"),
+        row("Virtual DAA", tn.virtual_daa_score ?? "—"),
+        row("Sync note", tn.sync_note || "none"),
+      ].join("");
+    }
+
+    async function load() {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 3000);
+      try {
+        const res = await fetch("/v1/cex/status", { signal: ctrl.signal });
+        if (!res.ok) throw new Error("status " + res.status);
+        const body = await res.json();
+        if (body.custody_started || body.actions_enabled) {
+          listenerEl.textContent = "The status payload disagreed with the fail-closed page. No custody action is available here.";
+        }
+        const gate = body.owned_node_gate || {};
+        const tn = body.tn10 || {};
+        if (gate.status && gate.status !== "red") {
+          const strong = document.querySelector(".gate strong");
+          const note = document.querySelector(".gate p");
+          if (strong) strong.textContent = "Owned-node gate: red";
+          if (note) note.textContent = "The status payload disagreed with the fail-closed page. Owned-node gate stays red. Custody not started.";
+        } else if (gate.local_synced === true && tn.is_synced !== true) {
+          const note = document.querySelector(".gate p");
+          if (note) note.textContent = "The status payload claimed sync that this host's probe did not report. Owned-node gate stays red. Custody not started.";
+        }
+        render(body);
+      } catch (err) {
+        tn10El.textContent = "Status refresh did not return. Custody not started. " + err;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    document.getElementById("refresh").addEventListener("click", load);
+    load();
+  </script>
+</body>
+</html>

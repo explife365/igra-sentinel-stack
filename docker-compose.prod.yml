@@ -1,0 +1,34 @@
+# Overlay: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Publishes 8790 on loopback only. Put Caddy (or another TLS proxy) in front.
+# Copy kaspa.env.production.example → /etc/igra-sentinel/kaspa.env (root-only).
+# Never put GALLEON_PRIVATE_KEY or mint keys in that file.
+
+services:
+  sentinel:
+    # Replace the base file's 0.0.0.0 publish. Do not append a second port mapping.
+    ports: !override
+      - "127.0.0.1:8790:8790"
+    env_file:
+      - path: ${SENTINEL_ENV_FILE:-kaspa.env}
+        required: false
+    environment:
+      SENTINEL_API_HOST: 0.0.0.0
+      SENTINEL_API_PORT: 8790
+      SENTINEL_TRUST_PROXY: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8790/health', timeout=4)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp

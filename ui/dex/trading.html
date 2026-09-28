@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Galleon Trading Console (rehearsal)</title>
+  <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+  <style>
+    :root {
+      --bg: #0e1210; --panel: #1a211d; --line: #2f3a34; --text: #f0ebe0; --muted: #a8a093;
+      --brass: #d4b483; --ok: #8fbf9a; --bad: #d98f86; --warn: #d9bc7a; --font: system-ui, sans-serif; --mono: ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+    a { color: var(--brass); }
+    header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .75rem; padding: .75rem 1rem; border-bottom: 1px solid var(--line); }
+    h1 { margin: 0; font-size: 1.05rem; }
+    .sub { color: var(--muted); font-size: .8rem; margin: .2rem 0 0; }
+    nav { display: flex; gap: .5rem; font-size: .8rem; align-items: center; }
+    nav a { border: 1px solid var(--line); padding: .25rem .5rem; border-radius: 4px; text-decoration: none; color: var(--text); }
+    .chips { display: flex; flex-wrap: wrap; gap: .35rem; padding: .5rem 1rem; }
+    .chip { font-size: .65rem; text-transform: uppercase; letter-spacing: .04em; border: 1px solid #5a4a2e; color: var(--warn); padding: .15rem .4rem; border-radius: 3px; }
+    .layout { display: grid; gap: .6rem; padding: 0 1rem 1.5rem; grid-template-columns: 1fr; }
+    @media (min-width: 1100px) { .layout { grid-template-columns: 1fr 320px; } }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: .5rem; min-height: 420px; }
+    #chart { height: 380px; }
+    .side { display: grid; gap: .6rem; align-content: start; }
+    section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: .7rem .8rem; }
+    h2 { margin: 0 0 .45rem; font-size: .72rem; letter-spacing: .07em; text-transform: uppercase; color: var(--brass); }
+    label { font-size: .7rem; color: var(--muted); display: block; margin-bottom: .25rem; }
+    select, button { font: inherit; width: 100%; padding: .45rem .5rem; border-radius: 6px; border: 1px solid var(--line); background: #121816; color: var(--text); }
+    button { cursor: pointer; margin-top: .35rem; }
+    .row { display: flex; justify-content: space-between; gap: .5rem; font-size: .8rem; padding: .2rem 0; border-bottom: 1px solid #252d28; }
+    .row span:first-child { color: var(--muted); }
+    .mono { font-family: var(--mono); font-size: .72rem; word-break: break-all; }
+    .tabs { display: flex; gap: .35rem; margin-bottom: .5rem; }
+    .tab { flex: 1; font-size: .72rem; padding: .35rem; border: 1px solid var(--line); background: transparent; color: var(--muted); }
+    .tab.active { color: var(--text); border-color: var(--brass); }
+    .pane { display: none; font-size: .82rem; }
+    .pane.active { display: block; }
+    .banner { background: #3a2a1a; border: 1px solid #6a5030; color: var(--warn); padding: .5rem .65rem; border-radius: 6px; font-size: .78rem; margin-bottom: .5rem; }
+    table { width: 100%; border-collapse: collapse; font-size: .72rem; font-family: var(--mono); }
+    th, td { padding: .25rem .3rem; border-bottom: 1px solid #252d28; text-align: left; }
+    footer { color: var(--muted); font-size: .75rem; padding: 0 1rem 1.2rem; }
+    .bad { color: var(--bad); }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Trading console (rehearsal)</h1>
+      <p class="sub">Galleon chain 38836 · mock OHLC · not live trading</p>
+    </div>
+    <nav>
+      <a href="/ui/dex/">DEX hub</a>
+      <a href="https://sentinel.tuce.app">Sentinel</a>
+    </nav>
+  </header>
+  <div class="chips">
+    <span class="chip">Not partnership</span>
+    <span class="chip">Not consensus</span>
+    <span class="chip">Not mainnet production</span>
+    <span class="chip">not_shipped</span>
+  </div>
+  <div class="layout">
+    <div>
+      <div class="chart-wrap">
+        <label>Symbol</label>
+        <select id="symbol"></select>
+        <div id="chart"></div>
+      </div>
+      <section style="margin-top:.6rem;">
+        <div class="tabs">
+          <button type="button" class="tab active" data-tab="analysis">Analysis</button>
+          <button type="button" class="tab" data-tab="automation">Automation</button>
+          <button type="button" class="tab" data-tab="leaderboard">Leaderboard</button>
+          <button type="button" class="tab" data-tab="copy">Copy trading</button>
+        </div>
+        <div id="pane-analysis" class="pane active">
+          <p class="sub">RSI / MACD computed client-side on mock series (not investment advice).</p>
+          <div id="analysisOut" class="mono"></div>
+        </div>
+        <div id="pane-automation" class="pane">
+          <div id="automationOut"></div>
+        </div>
+        <div id="pane-leaderboard" class="pane">
+          <table><thead><tr><th>#</th><th>Wallet</th><th>30d vol</th><th>Trades</th></tr></thead><tbody id="lbBody"></tbody></table>
+        </div>
+        <div id="pane-copy" class="pane">
+          <div class="banner">Copy trading execution is <strong>not_shipped</strong>. Follow UI is read-only rehearsal.</div>
+          <div id="copyOut"></div>
+          <button type="button" disabled title="not_shipped">Follow leader (disabled)</button>
+        </div>
+      </section>
+    </div>
+    <div class="side">
+      <section>
+        <h2>Wallet</h2>
+        <button type="button" id="connectBtn">Connect browser wallet</button>
+        <p class="mono" id="addr"></p>
+        <p class="sub" id="walletNote">Keys stay in your wallet. No server signing.</p>
+      </section>
+      <section>
+        <h2>Volume tier</h2>
+        <div id="volumeCard">Loading…</div>
+      </section>
+      <section>
+        <h2>Financing (mock)</h2>
+        <div id="financeCard">Loading…</div>
+      </section>
+    </div>
+  </div>
+  <footer>Not an Igra partnership. Not consensus. Not mainnet production. live_trading false until contracts ship.</footer>
+  <script type="module">
+    import { DexWallet } from "/ui/dex/wallet.js";
+
+    const API = window.location.origin;
+    const dexWallet = new DexWallet(API);
+    const symbolEl = document.getElementById("symbol");
+    const volumeCard = document.getElementById("volumeCard");
+    const financeCard = document.getElementById("financeCard");
+    const analysisOut = document.getElementById("analysisOut");
+    const automationOut = document.getElementById("automationOut");
+    const lbBody = document.getElementById("lbBody");
+    const copyOut = document.getElementById("copyOut");
+    let chartApi = null;
+    let candleSeries = null;
+    let lastBars = [];
+
+    function row(k, v) {
+      return `<div class="row"><span>${k}</span><span class="mono">${v}</span></div>`;
+    }
+
+    function rsi(closes, period = 14) {
+      if (closes.length < period + 1) return null;
+      let gains = 0, losses = 0;
+      for (let i = closes.length - period; i < closes.length; i++) {
+        const d = closes[i] - closes[i - 1];
+        if (d >= 0) gains += d; else losses -= d;
+      }
+      const rs = losses === 0 ? 100 : gains / losses;
+      return 100 - 100 / (1 + rs);
+    }
+
+    function ema(data, span) {
+      const k = 2 / (span + 1);
+      let prev = data[0];
+      const out = [prev];
+      for (let i = 1; i < data.length; i++) {
+        prev = data[i] * k + prev * (1 - k);
+        out.push(prev);
+      }
+      return out;
+    }
+
+    function renderAnalysis(bars) {
+      const closes = bars.map((b) => b.close);
+      const r = rsi(closes);
+      const ema12 = ema(closes, 12);
+      const ema26 = ema(closes, 26);
+      const macd = ema12[ema12.length - 1] - ema26[ema26.length - 1];
+      analysisOut.textContent = `RSI(14): ${r == null ? "—" : r.toFixed(2)}  |  MACD line (mock): ${macd.toFixed(6)}`;
+    }
+
+    function ensureChart() {
+      if (chartApi) return;
+      const el = document.getElementById("chart");
+      chartApi = LightweightCharts.createChart(el, {
+        layout: { background: { color: "#1a211d" }, textColor: "#a8a093" },
+        grid: { vertLines: { color: "#252d28" }, horzLines: { color: "#252d28" } },
+        width: el.clientWidth,
+        height: 380,
+      });
+      candleSeries = chartApi.addCandlestickSeries({
+        upColor: "#8fbf9a", downColor: "#d98f86", borderVisible: false,
+        wickUpColor: "#8fbf9a", wickDownColor: "#d98f86",
+      });
+      window.addEventListener("resize", () => chartApi.applyOptions({ width: el.clientWidth }));
+    }
+
+    function setChart(bars) {
+      ensureChart();
+      const data = bars.map((b) => ({
+        time: b.time,
+        open: b.open,
+        high: b.high,
+        low: b.low,
+        close: b.close,
+      }));
+      candleSeries.setData(data);
+      lastBars = bars;
+      renderAnalysis(bars);
+    }
+
+    async function loadSymbols() {
+      try {
+        const r = await fetch(API + "/v1/derivatives/status");
+        const d = await r.json();
+        const catalog = d.markets_catalog || [];
+        symbolEl.innerHTML = "";
+        const opts = catalog.length ? catalog.map((m) => m.symbol) : ["gTEST-wiKAS", "gTEST-tUSDC"];
+        for (const s of opts.slice(0, 40)) {
+          const o = document.createElement("option");
+          o.value = s;
+          o.textContent = s;
+          symbolEl.appendChild(o);
+        }
+      } catch {
+        symbolEl.innerHTML = "<option>gTEST-wiKAS</option>";
+      }
+    }
+
+    async function loadConsole() {
+      const sym = symbolEl.value || "gTEST-wiKAS";
+      const cfg = await fetch(API + "/v1/trading/console-config?symbol=" + encodeURIComponent(sym)).then((r) => r.json());
+      setChart(cfg.ohlc || []);
+    }
+
+    async function loadSideCards(wallet) {
+      const q = wallet ? "?wallet=" + encodeURIComponent(wallet) : "";
+      const [vol, fin, lb, auto, copy] = await Promise.all([
+        fetch(API + "/v1/trading/volume-rewards" + q).then((r) => r.json()),
+        fetch(API + "/v1/trading/financing").then((r) => r.json()),
+        fetch(API + "/v1/trading/leaderboard?limit=15").then((r) => r.json()),
+        fetch(API + "/v1/trading/automation-policy").then((r) => r.json()),
+        fetch(API + "/v1/trading/copy-trading/status" + q).then((r) => r.json()),
+      ]);
+      volumeCard.innerHTML = [
+        row("Tier", vol.active_tier),
+        row("30d vol (mock)", vol.volume_30d_gtest_equiv),
+        row("Maker fee", (vol.maker_fee_bps ?? "—") + " bps"),
+        row("Rebate", (vol.volume_rebate_bps ?? "—") + " bps"),
+      ].join("");
+      financeCard.innerHTML = [
+        row("Regime", fin.regime),
+        row("Rate", (fin.rate_bps ?? "—") + " bps"),
+        row("Next settle", new Date((fin.next_settlement_unix || 0) * 1000).toISOString().slice(11, 19) + " UTC"),
+      ].join("");
+      lbBody.innerHTML = (lb.entries || []).map((e) =>
+        `<tr><td>${e.rank}</td><td>${(e.wallet || "").slice(0, 10)}…</td><td>${e.volume_30d_gtest}</td><td>${e.trades}</td></tr>`
+      ).join("");
+      automationOut.innerHTML = `<p>${auto.bots_note || ""}</p><p class="mono">Allowed: ${(auto.allowed || []).join(", ")}</p><p class="mono bad">Not allowed: ${(auto.not_allowed || []).join(", ")}</p>`;
+      copyOut.innerHTML = (copy.followed_leaders || []).length
+        ? copy.followed_leaders.map((f) => row(f.label, f.leader_wallet)).join("")
+        : "<p class='sub'>Connect wallet to see read-only follow list rehearsal.</p>";
+    }
+
+    document.querySelectorAll(".tab").forEach((btn) => {
+      btn.onclick = () => {
+        document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
+        document.querySelectorAll(".pane").forEach((p) => p.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("pane-" + btn.dataset.tab).classList.add("active");
+      };
+    });
+
+    document.getElementById("connectBtn").onclick = async () => {
+      if (dexWallet.trader) {
+        await dexWallet.disconnect();
+        document.getElementById("addr").textContent = "";
+        await loadSideCards(null);
+        return;
+      }
+      await dexWallet.loadConfig();
+      await dexWallet.discoverInjected();
+      const inj = dexWallet.listConnectors().find((c) => c.kind === "injected");
+      if (!inj) {
+        document.getElementById("walletNote").textContent = "No injected wallet found.";
+        return;
+      }
+      await dexWallet.connect(inj.id);
+      document.getElementById("addr").textContent = dexWallet.trader;
+      await loadSideCards(dexWallet.trader);
+    };
+
+    symbolEl.onchange = () => { loadConsole().catch(() => {}); };
+
+    (async () => {
+      await loadSymbols();
+      await loadConsole();
+      await loadSideCards(null);
+    })();
+  </script>
+</body>
+</html>

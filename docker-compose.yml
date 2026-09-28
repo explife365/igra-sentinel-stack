@@ -1,6 +1,7 @@
 services:
   sentinel:
     build: .
+    # Dev publish. docker-compose.prod.yml must !override this so production binds 127.0.0.1 only.
     ports:
       - "8790:8790"
     environment:

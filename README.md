@@ -11,7 +11,8 @@ This is a **slim, standalone** companion to [kaspa-frontier-engine](https://gith
 | Network probes | Galleon + Igra mainnet RPC reachability, read-only detection |
 | Safety gates | SHA-256 commitment checks (`POST /v1/evm/safety-verify`) — **not** on-chain ZK |
 | Bridge verify | KatBridge KIP-21 structural checks (`POST /v1/funding/bridge-verify`) |
-| Wallet connect UI | EIP-6963 + WalletConnect on Galleon (`/ui/dex`) |
+| Wallet connect UI | EIP-6963 on Galleon (`/ui/dex`). WalletConnect stays off until a project id is set |
+| CEX rehearsal | Fail-closed page (`/ui/cex`). Custody is not started |
 | Client hooks | Fail-closed CLI before broadcast (`python -m sentinel_stack.hooks`) |
 
 ## What this is not
@@ -54,17 +55,39 @@ python -m sentinel_stack.hooks --verify-tx --gas-gwei 50
 | GET | `/v1/sentinel/status` | Dual-network probes + blockers |
 | GET | `/v1/igra/ecosystem` | Compatibility catalog (no partnership claims) |
 | GET | `/v1/networks` | Galleon + mainnet metadata |
-| GET | `/v1/dex/wallet/connect-config` | WalletConnect / chain params |
+| GET | `/v1/dex/wallet/connect-config` | Wallet connect config. Broadcast is not offered |
+| GET | `/v1/cex/status` | Fail-closed CEX rehearsal. No custody actions |
 | POST | `/v1/evm/safety-verify` | Universal EVM safety gate |
 | POST | `/v1/funding/bridge-verify` | KatBridge intent validation |
 
-## Docker
+## Docker (local)
 
 ```bash
 docker compose up --build
 ```
 
-Binds `8790` by default.
+Publishes `8790` on the host (dev convenience).
+
+## Public hosts
+
+App port stays on loopback. TLS is a reverse proxy. See [docs/production.md](docs/production.md).
+
+| Host | Surface |
+|------|---------|
+| `sentinel.tuce.app` | Primary status. Canonical `SENTINEL_PUBLIC_ORIGIN` |
+| `dex.tuce.app` | Galleon testnet rehearsal, chain 38836 |
+| `cex.tuce.app` | Fail-closed CEX rehearsal. Custody is not started |
+
+Request `Host` is used for origin only when it is exactly one of those three names.
+
+Host02 runs the systemd unit on `127.0.0.1:8790` with nginx in front. Do not start `Caddyfile` while nginx owns 443. The production compose overlay publishes `8790` on loopback only; do not start it if that would also publish `0.0.0.0:8790`.
+
+```bash
+python scripts/smoke.py
+python scripts/prod_preflight.py
+```
+
+Never put `GALLEON_PRIVATE_KEY` on this host.
 
 ## Tests
 

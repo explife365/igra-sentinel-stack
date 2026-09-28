@@ -3,90 +3,262 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Galleon Wallet — Igra Sentinel</title>
+  <title>Galleon DEX rehearsal</title>
   <style>
-    :root { --bg:#070b12; --card:#101824; --border:#243044; --text:#eef4fc; --muted:#8fa3be; --accent:#6ee7b7; --bad:#f87171; --font:system-ui,sans-serif; }
-    * { box-sizing:border-box; }
-    body { margin:0; font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; }
-    header { padding:1.25rem 1.5rem; border-bottom:1px solid var(--border); }
-    h1 { margin:0 0 .3rem; font-size:1.2rem; }
-    .sub { color:var(--muted); font-size:.85rem; max-width:640px; }
-    main { max-width:480px; margin:1.5rem auto; padding:0 1rem 2rem; display:grid; gap:1rem; }
-    .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.15rem; }
-    label { display:block; font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:.35rem; }
-    button { width:100%; padding:.7rem; border:none; border-radius:8px; background:var(--accent); color:#052e16; font-weight:600; cursor:pointer; margin-top:.4rem; }
-    button.secondary { background:transparent; border:1px solid var(--border); color:var(--text); }
-    .pill { display:inline-block; font-size:.7rem; padding:.2rem .5rem; border-radius:999px; background:#1a2838; color:var(--muted); }
-    .pill.live { background:#064e3b; color:var(--accent); }
-    .addr { font-family:ui-monospace,monospace; font-size:.75rem; color:var(--muted); word-break:break-all; margin:.5rem 0; }
-    pre { background:#0a1018; border:1px solid var(--border); border-radius:8px; padding:.65rem; font-size:.72rem; overflow:auto; max-height:200px; color:var(--muted); }
-    #err { color:var(--bad); font-size:.85rem; margin-top:.5rem; }
-    .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:100; align-items:center; justify-content:center; padding:1rem; }
-    .modal-backdrop.open { display:flex; }
-    .modal { background:var(--card); border:1px solid var(--border); border-radius:14px; width:100%; max-width:380px; padding:1.15rem; }
-    .wallet-list { display:grid; gap:.45rem; }
-    .wallet-opt { display:flex; align-items:center; gap:.65rem; width:100%; padding:.6rem; border-radius:10px; border:1px solid var(--border); background:#0a1018; color:var(--text); cursor:pointer; text-align:left; }
-    .wallet-opt:hover { border-color:var(--accent); }
-    .links a { color:var(--accent); text-decoration:none; font-size:.85rem; margin-right:.75rem; }
+    :root {
+      --bg: #121614;
+      --panel: #1b211e;
+      --line: #343d36;
+      --text: #f3efe4;
+      --muted: #b7b1a4;
+      --brass: #d4b483;
+      --ok: #9dC7a8;
+      --bad: #e09a90;
+      --warn: #e0c27a;
+      --font: "Segoe UI", system-ui, sans-serif;
+      --mono: ui-monospace, "Cascadia Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.4; }
+    a { color: var(--brass); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    header {
+      display: flex; justify-content: space-between; gap: 1rem; align-items: center;
+      padding: .85rem 1.1rem; border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0; font-size: 1.05rem; font-weight: 650; }
+    .sub { color: var(--muted); font-size: .82rem; margin: .2rem 0 0; }
+    nav { display: flex; gap: .6rem; font-size: .82rem; }
+    nav a { border: 1px solid var(--line); padding: .3rem .55rem; border-radius: 4px; color: var(--text); }
+    main { padding: 1rem 1.1rem 2rem; display: grid; gap: .8rem; }
+    .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .chip {
+      font-family: var(--mono); font-size: .68rem; letter-spacing: .04em; text-transform: uppercase;
+      border: 1px solid #5a4a2e; color: var(--warn); padding: .18rem .45rem; border-radius: 3px;
+    }
+    .chip.ok { border-color: #2f5a40; color: var(--ok); }
+    .chip.bad { border-color: #6a3832; color: var(--bad); }
+    .layout { display: grid; gap: .8rem; }
+    @media (min-width: 980px) { .layout { grid-template-columns: 1.1fr .9fr .9fr; } }
+    .layout.programs { grid-template-columns: 1fr; }
+    @media (min-width: 980px) { .layout.programs { grid-template-columns: repeat(3, 1fr); } }
+    input[type="checkbox"] { margin-right: .35rem; }
+    .disabled-toggle { opacity: .55; pointer-events: none; }
+    section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: .85rem .9rem; }
+    h2 { margin: 0 0 .55rem; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--brass); }
+    .row { display: flex; justify-content: space-between; gap: .8rem; font-size: .84rem; padding: .28rem 0; border-bottom: 1px solid #2a322c; }
+    .row span:first-child { color: var(--muted); }
+    .mono { font-family: var(--mono); font-size: .75rem; word-break: break-all; }
+    button {
+      font: inherit; width: 100%; margin-top: .45rem; padding: .55rem .7rem; border-radius: 6px;
+      border: 1px solid var(--line); background: #242c27; color: var(--text); cursor: pointer;
+    }
+    button.quiet { background: transparent; }
+    .empty { color: var(--muted); font-size: .84rem; margin: .35rem 0; }
+    .bad { color: var(--bad); }
+    .ok { color: var(--ok); }
+    pre {
+      margin: .5rem 0 0; max-height: 180px; overflow: auto; background: #101411; color: var(--muted);
+      font-family: var(--mono); font-size: .68rem; padding: .6rem; border-radius: 6px;
+    }
+    .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); align-items: center; justify-content: center; padding: 1rem; }
+    .modal-backdrop.open { display: flex; }
+    .modal { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; width: min(420px, 100%); padding: .9rem; }
+    .wallet-opt { text-align: left; }
+    footer { color: var(--muted); font-size: .78rem; padding: 0 1.1rem 1.4rem; }
+    details.deriv-markets { margin-top: .45rem; font-size: .82rem; }
+    details.deriv-markets summary { cursor: pointer; color: var(--brass); list-style: none; }
+    details.deriv-markets summary::-webkit-details-marker { display: none; }
+    .deriv-table-wrap {
+      margin-top: .4rem; max-height: 200px; overflow: auto; border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+    table.deriv-markets {
+      width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: .68rem;
+    }
+    table.deriv-markets th, table.deriv-markets td {
+      padding: .25rem .4rem; border-bottom: 1px solid #2a322c; text-align: left;
+    }
+    table.deriv-markets th { color: var(--muted); position: sticky; top: 0; background: var(--panel); }
   </style>
 </head>
-<body>
+<body data-surface="dex">
   <header>
-    <h1>Galleon wallet connect</h1>
-    <p class="sub">EIP-6963 + WalletConnect on chain 38836. Swap execution is in kaspa-frontier-engine — this UI only connects and probes sentinel status.</p>
+    <div>
+      <h1>Galleon DEX rehearsal</h1>
+      <p class="sub">Chain 38836 · RPC <span class="mono" id="rpc">https://galleon-testnet.igralabs.com:8545</span></p>
+    </div>
+    <nav>
+      <a href="/ui/dex/trading.html">Trading console</a>
+      <a href="https://sentinel.tuce.app">Sentinel</a>
+      <a href="https://cex.tuce.app">CEX rehearsal</a>
+    </nav>
   </header>
   <main>
-    <div class="card">
-      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:.75rem">
-        <button id="connectBtn" type="button" style="width:auto;margin:0">Connect wallet</button>
-        <span id="walletStatus" class="pill">disconnected</span>
-      </div>
-      <div id="walletAddr" class="addr"></div>
-      <div id="balLine" class="sub" style="font-size:.8rem"></div>
-      <div id="err"></div>
+    <div class="chips">
+      <span class="chip">Not an Igra partnership</span>
+      <span class="chip">Not consensus</span>
+      <span class="chip">Not mainnet production</span>
+      <span class="chip" id="probeChip">Probe loading</span>
+      <span class="chip" id="wcChip">WalletConnect is disabled</span>
     </div>
-    <div class="card">
-      <label>Sentinel gate (pre-tx)</label>
-      <button id="gateBtn" type="button" class="secondary">Check /v1/sentinel/status</button>
-      <pre id="gateOut">—</pre>
+    <div class="layout">
+      <section>
+        <h2>gTEST-tUSDC</h2>
+        <p class="empty" id="hub">Hub seeding state: not reported by this API. Balances are not shown.</p>
+        <div class="row"><span>Book</span><span>empty</span></div>
+        <p class="empty" id="book">No order book. Swap broadcast is not shipped on this host.</p>
+      </section>
+      <section>
+        <h2>Live gate</h2>
+        <div id="gate">Loading sentinel status…</div>
+        <p class="empty bad" id="gateErr"></p>
+      </section>
+      <section>
+        <h2>Wallet</h2>
+        <p class="empty" id="wc">WalletConnect is disabled until WALLETCONNECT_PROJECT_ID is set. This host will not invent a project id.</p>
+        <button type="button" id="connectBtn">Connect browser wallet</button>
+        <p class="mono" id="addr"></p>
+        <p class="empty" id="bal"></p>
+        <p class="empty">A connected browser wallet can be read here. This page does not broadcast.</p>
+        <p class="bad" id="err"></p>
+      </section>
     </div>
-    <div class="card links">
-      <a href="/ui">← Dashboard</a>
-      <a href="https://github.com/explife365/kaspa-frontier-engine/tree/main/projects/kaspa-dex-terminal" target="_blank" rel="noopener">Full DEX terminal</a>
-      <a href="/v1/dex/wallet/connect-config" target="_blank">Connect config</a>
+    <section>
+      <h2>Connect config</h2>
+      <div id="cfg">Loading…</div>
+    </section>
+    <div class="layout programs">
+      <section>
+        <h2>LP incentives (rehearsal)</h2>
+        <p class="empty">Liquidity provider rewards — not MEV or front-running. Epochs week/month on integrator API.</p>
+        <div id="lpProgram">Loading program…</div>
+        <label class="disabled-toggle"><input type="checkbox" id="autoRenew" disabled /> Auto-renew next epoch (rehearsal only — not wired)</label>
+        <p class="empty"><a id="lpDocs" href="#">Integrator program API</a></p>
+      </section>
+      <section>
+        <h2>Lending</h2>
+        <div id="lendingCard">Loading…</div>
+      </section>
+      <section>
+        <h2>Derivatives</h2>
+        <div id="derivCard">Loading…</div>
+      </section>
     </div>
   </main>
-
+  <footer>
+    Not an Igra partnership. Not consensus. Not mainnet production. Not CEX custody.
+    Swap broadcast is not shipped on this host.
+    LP / lending / perps are rehearsal scaffolds until contracts and legal review ship.
+  </footer>
   <div id="walletModal" class="modal-backdrop">
     <div class="modal">
-      <h2 style="margin:0 0 .5rem;font-size:1rem">Connect wallet</h2>
-      <div id="walletList" class="wallet-list"></div>
-      <button type="button" class="secondary" id="walletModalClose" style="margin-top:.75rem">Cancel</button>
+      <h2>Browser wallets</h2>
+      <div id="walletList"></div>
+      <button type="button" class="quiet" id="walletModalClose">Close</button>
     </div>
   </div>
-
   <script type="module">
     import { DexWallet } from "/ui/dex/wallet.js";
 
-    const API = window.location.origin;
-    const dexWallet = new DexWallet(API);
+    const dexWallet = new DexWallet(window.location.origin);
+    const rpcEl = document.getElementById("rpc");
+    const probeChip = document.getElementById("probeChip");
+    const wcChip = document.getElementById("wcChip");
+    const wcEl = document.getElementById("wc");
+    const gateEl = document.getElementById("gate");
+    const gateErr = document.getElementById("gateErr");
+    const cfgEl = document.getElementById("cfg");
+    const hubEl = document.getElementById("hub");
     const errEl = document.getElementById("err");
+    const addrEl = document.getElementById("addr");
+    const balEl = document.getElementById("bal");
     const connectBtn = document.getElementById("connectBtn");
-    const walletStatus = document.getElementById("walletStatus");
-    const walletAddr = document.getElementById("walletAddr");
-    const balLine = document.getElementById("balLine");
     const walletModal = document.getElementById("walletModal");
     const walletList = document.getElementById("walletList");
-    const gateOut = document.getElementById("gateOut");
+    const lpProgramEl = document.getElementById("lpProgram");
+    const lendingCard = document.getElementById("lendingCard");
+    const derivCard = document.getElementById("derivCard");
+    const lpDocs = document.getElementById("lpDocs");
+    // Same-origin sentinel proxy (host03 via server INTEGRATOR_REACH_URL when reachable).
+    // Operators may override: ?integrator_base=http://127.0.0.1:8788 (SSH tunnel).
+    const params = new URLSearchParams(window.location.search);
+    const INTEGRATOR_BASE = (params.get("integrator_base") || window.location.origin).replace(/\/$/, "");
 
-    function setErr(msg) { errEl.textContent = msg || ""; }
+    function row(k, v) {
+      return `<div class="row"><span>${k}</span><span class="mono">${v}</span></div>`;
+    }
+
+    async function loadStatus() {
+      try {
+        const [statusRes, netRes, cfgRes] = await Promise.all([
+          fetch("/v1/sentinel/status"),
+          fetch("/v1/networks"),
+          fetch("/v1/dex/wallet/connect-config"),
+        ]);
+        if (!statusRes.ok || !netRes.ok || !cfgRes.ok) throw new Error("status request failed");
+        const status = await statusRes.json();
+        const nets = await netRes.json();
+        const cfg = await cfgRes.json();
+        const g = (status.networks || {}).galleon_testnet || {};
+        const probe = g.probe || {};
+        const listed = (nets.networks || []).find((n) => n.id === "galleon-testnet") || {};
+        if (listed.rpc) rpcEl.textContent = listed.rpc;
+        probeChip.textContent = probe.reachable ? "Galleon reachable" : "Galleon unreachable";
+        probeChip.className = probe.reachable ? "chip ok" : "chip bad";
+        const hostWrites = probe.host_writes === true;
+        gateEl.innerHTML = [
+          row("Chain", g.chain_id ?? "—"),
+          row("Matches 38836", probe.chain_id_matches ? "yes" : "no"),
+          row("Latest block", probe.latest_block ?? "—"),
+          row("Remote RPC", probe.rpc_writable === false ? "read-only" : (probe.rpc_writable ? "gas price answered" : "—")),
+          row("This host deploys", (g.deploy_allowed || listed.deploy_allowed) ? "advertised" : "not shipped"),
+          row("This host writes", hostWrites ? "advertised" : "not shipped"),
+          row("Active profile", status.active_profile || nets.active_profile || "—"),
+          row("Broadcast", cfg.broadcast_offered ? "offered" : "not offered"),
+        ].join("");
+        gateErr.textContent = "";
+        const wc = (cfg.connectors || {}).walletconnect || {};
+        if (wc.enabled) {
+          wcChip.textContent = "WalletConnect enabled";
+          wcChip.className = "chip ok";
+          wcEl.textContent = "WalletConnect project id is set. This page still does not broadcast.";
+        } else {
+          wcChip.textContent = "WalletConnect is disabled";
+          wcChip.className = "chip";
+          wcEl.textContent = wc.hint || "WalletConnect is disabled until WALLETCONNECT_PROJECT_ID is set. This host will not invent a project id.";
+        }
+        cfgEl.innerHTML = [
+          row("Origin", cfg.public_origin || "—"),
+          row("Metadata", (cfg.metadata || {}).url || "—"),
+          row("Chain", (cfg.network || {}).chainIdDecimal ?? "—"),
+        ].join("");
+        const main = (nets.networks || []).find((n) => n.id === "igra-mainnet");
+        const deployBugs = [];
+        if (g.deploy_allowed || listed.deploy_allowed) {
+          deployBugs.push("Galleon deploy_allowed is true. This host does not deploy.");
+        }
+        if (main && main.deploy_allowed) {
+          deployBugs.push("Mainnet deploy_allowed is true. This rehearsal expects it to stay false.");
+        }
+        if (cfg.broadcast_offered || hostWrites) {
+          deployBugs.push("This page was offered a write or broadcast. None is shipped here.");
+        }
+        if (deployBugs.length) gateErr.textContent = deployBugs.join(" ");
+        hubEl.textContent = "Hub seeding state: not reported by this API. Balances are not shown.";
+      } catch (err) {
+        probeChip.textContent = "Status unavailable";
+        probeChip.className = "chip bad";
+        gateEl.innerHTML = "<p class='bad'>Could not load live status.</p>";
+        gateErr.textContent = String(err);
+        cfgEl.innerHTML = "<p class='bad'>Connect config unavailable.</p>";
+      }
+    }
 
     function setConnected(on) {
-      connectBtn.textContent = on ? "Disconnect" : "Connect wallet";
-      walletStatus.textContent = on ? "connected" : "disconnected";
-      walletStatus.className = on ? "pill live" : "pill";
-      walletAddr.textContent = on ? dexWallet.trader : "";
-      balLine.textContent = "";
+      connectBtn.textContent = on ? "Disconnect browser wallet" : "Connect browser wallet";
+      addrEl.textContent = on ? dexWallet.trader : "";
+      if (!on) balEl.textContent = "";
     }
 
     async function refreshBal() {
@@ -94,38 +266,37 @@
       try {
         const wei = await dexWallet.getBalance();
         const ikas = Number(wei) / 1e18;
-        balLine.textContent = `iKAS balance: ${ikas.toFixed(4)}`;
-      } catch (e) {
-        balLine.textContent = "Balance: " + e.message;
+        balEl.textContent = `Wallet-reported iKAS: ${ikas.toFixed(4)}. This is not a hub balance.`;
+      } catch (err) {
+        balEl.textContent = "Wallet balance unread: " + err.message;
       }
     }
 
     async function openModal() {
-      setErr("");
+      errEl.textContent = "";
       await dexWallet.loadConfig();
       await dexWallet.discoverInjected();
-      const connectors = dexWallet.listConnectors();
+      const connectors = dexWallet.listConnectors().filter((c) => c.kind === "injected");
       walletList.innerHTML = "";
       if (!connectors.length) {
-        walletList.innerHTML = "<p class='sub'>No wallets found. Install MetaMask or set WALLETCONNECT_PROJECT_ID.</p>";
-      } else {
-        for (const c of connectors) {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "wallet-opt";
-          btn.innerHTML = `<strong>${c.name}</strong>`;
-          btn.onclick = async () => {
-            walletModal.classList.remove("open");
-            try {
-              await dexWallet.connect(c);
-              setConnected(true);
-              await refreshBal();
-            } catch (e) {
-              setErr(e.message);
-            }
-          };
-          walletList.appendChild(btn);
-        }
+        walletList.innerHTML = "<p class='empty'>No browser wallet announced.</p>";
+      }
+      for (const c of connectors) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "wallet-opt";
+        btn.textContent = c.name;
+        btn.onclick = async () => {
+          walletModal.classList.remove("open");
+          try {
+            await dexWallet.connect(c);
+            setConnected(true);
+            await refreshBal();
+          } catch (err) {
+            errEl.textContent = err.message;
+          }
+        };
+        walletList.appendChild(btn);
       }
       walletModal.classList.add("open");
     }
@@ -136,15 +307,106 @@
         setConnected(false);
         return;
       }
-      await openModal();
+      try {
+        await openModal();
+      } catch (err) {
+        errEl.textContent = err.message;
+      }
     };
-
     document.getElementById("walletModalClose").onclick = () => walletModal.classList.remove("open");
 
-    document.getElementById("gateBtn").onclick = async () => {
-      const r = await fetch(`${API}/v1/sentinel/status`);
-      gateOut.textContent = JSON.stringify(await r.json(), null, 2);
-    };
+    async function loadProgramCards() {
+      lpDocs.href = INTEGRATOR_BASE + "/v1/liquidity/program";
+      lpDocs.target = "_blank";
+      lpDocs.rel = "noopener";
+      try {
+        const [progRes, lendRes, derivRes] = await Promise.all([
+          fetch(INTEGRATOR_BASE + "/v1/liquidity/program"),
+          fetch(INTEGRATOR_BASE + "/v1/lending/status"),
+          fetch(INTEGRATOR_BASE + "/v1/derivatives/status"),
+        ]);
+        if (!progRes.ok) throw new Error("liquidity program unavailable");
+        const prog = await progRes.json();
+        const epochs = prog.epochs || [];
+        const split = prog.fee_split_default || {};
+        const lines = [
+          row("Shipped on-chain", prog.not_shipped_on_chain ? "no" : "advertised"),
+          row("Deploy allowed", prog.deploy_allowed ? "yes" : "no"),
+          row("Fee split", `${split.contributor_bps ?? 8000} / ${split.protocol_bps ?? 2000} bps`),
+          row("Active epochs", String(epochs.length)),
+        ];
+        for (const e of epochs.slice(0, 2)) {
+          lines.push(row(`${e.duration} epoch`, `${e.epoch_id} · ${e.total_fees_gtest_equiv} gTEST fees`));
+        }
+        lpProgramEl.innerHTML = lines.join("");
+        if (lendRes.ok) {
+          const lend = await lendRes.json();
+          lendingCard.innerHTML = [
+            row("Phase", lend.phase ?? "—"),
+            row("Not shipped", lend.not_shipped ? "yes" : "no"),
+            row("Max LTV", `${lend.max_ltv_bps ?? "—"} bps`),
+          ].join("");
+        } else {
+          lendingCard.innerHTML = "<p class='empty'>Lending status unavailable.</p>";
+        }
+        if (derivRes.ok) {
+          const deriv = await derivRes.json();
+          const t100 = deriv.top_100 || {};
+          const hubs = t100.hubs || {};
+          const rankRange = Array.isArray(t100.rank_range) ? t100.rank_range.join("–") : "—";
+          const lines = [
+            row("Phase", deriv.phase ?? "—"),
+            row("Not shipped", deriv.not_shipped ? "yes" : "no"),
+            row("Deploy allowed", deriv.deploy_allowed ? "yes" : "no"),
+            row("Live trading", deriv.live_trading ? "yes" : "no"),
+            row("Max leverage", `${deriv.max_leverage ?? "—"}× scaffold`),
+            row("Top-100 catalog", `${t100.count ?? "—"} symbols (ranks ${rankRange})`),
+            row("Hub split", `gTEST ${hubs.gTEST ?? "—"} · tUSDC ${hubs.tUSDC ?? "—"}`),
+          ];
+          if (deriv.markets_note) {
+            lines.push(`<p class="empty">${deriv.markets_note}</p>`);
+          }
+          const catalog = deriv.markets_catalog || [];
+          if (catalog.length) {
+            const rows = catalog.map(
+              (m) => `<tr><td>${m.rank ?? "—"}</td><td>${m.symbol ?? "—"}</td><td>${m.hub ?? "—"}</td></tr>`
+            ).join("");
+            lines.push(
+              `<details class="deriv-markets"><summary>Markets catalog (${catalog.length})</summary>` +
+              `<div class="deriv-table-wrap"><table class="deriv-markets"><thead><tr>` +
+              `<th>Rank</th><th>Symbol</th><th>Hub</th></tr></thead><tbody>${rows}</tbody></table></div></details>`
+            );
+          }
+          const rankChg = deriv.ranking_changes || {};
+          const chgEntries = rankChg.entries || [];
+          if (chgEntries.length) {
+            const chgRows = chgEntries.map((e) => {
+              const typ = e.type || e.change || "—";
+              const sym = e.symbol || "—";
+              const rk = e.rank ?? "—";
+              const at = e.effective_at || e.applied_at || "—";
+              return `<tr><td>${rk}</td><td>${sym}</td><td>${typ}</td><td>${at}</td></tr>`;
+            }).join("");
+            lines.push(
+              `<details class="deriv-markets" open><summary>Ranking changes (${chgEntries.length})</summary>` +
+              `<p class="empty">Operator changelog on integrator host — not editable in browser.</p>` +
+              `<div class="deriv-table-wrap"><table class="deriv-markets"><thead><tr>` +
+              `<th>Rank</th><th>Symbol</th><th>Change</th><th>Effective</th></tr></thead><tbody>${chgRows}</tbody></table></div></details>`
+            );
+          }
+          derivCard.innerHTML = lines.join("");
+        } else {
+          derivCard.innerHTML = "<p class='empty'>Derivatives status unavailable.</p>";
+        }
+      } catch (err) {
+        lpProgramEl.innerHTML = "<p class='bad'>Could not load integrator LP program. Set ?integrator_base= if CORS blocks.</p>";
+        lendingCard.innerHTML = "<p class='empty'>—</p>";
+        derivCard.innerHTML = "<p class='empty'>—</p>";
+      }
+    }
+
+    loadStatus();
+    loadProgramCards();
   </script>
 </body>
 </html>

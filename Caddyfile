@@ -1,0 +1,18 @@
+# Optional TLS proxy when nothing else owns :443.
+# host02.tuce.app already runs nginx on 80/443. Do not start this file there.
+# Certificates, when Caddy is the only listener, are for these names only:
+#   sentinel.tuce.app  dex.tuce.app  cex.tuce.app
+# App upstream is loopback. Do not proxy to kaspad.
+
+sentinel.tuce.app, dex.tuce.app, cex.tuce.app {
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		X-Frame-Options DENY
+		Content-Security-Policy "frame-ancestors 'none'"
+		-Server
+	}
+	reverse_proxy 127.0.0.1:8790
+}

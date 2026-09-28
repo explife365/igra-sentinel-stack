@@ -156,7 +156,7 @@ export class DexWallet {
       optionalChains: [chainId],
       showQrModal: true,
       rpcMap: { [chainId]: this.network.rpcUrls[0] },
-      methods: this.config.sign_methods || ["eth_sendTransaction"],
+      methods: this.config.sign_methods || ["personal_sign"],
       metadata: this.config.metadata,
     });
     this._unbindProvider();

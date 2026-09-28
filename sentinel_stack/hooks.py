@@ -72,6 +72,20 @@ def verify_transaction_intent(
     if blockers:
         reasons.extend([f"blocker:{b}" for b in blockers])
 
+    networks = status.get("networks")
+    deploy_ok = False
+    if isinstance(networks, dict):
+        for net in networks.values():
+            if isinstance(net, dict) and net.get("deploy_allowed") is True:
+                deploy_ok = True
+                break
+    if not deploy_ok:
+        reasons.append("deploy_not_allowed_on_this_host")
+
+    host = status.get("this_host")
+    if not (isinstance(host, dict) and host.get("broadcast_shipped") is True):
+        reasons.append("broadcast_not_shipped")
+
     allowed = len(reasons) == 0
     return {
         "ok": True,
